@@ -21,6 +21,7 @@ function toGoalPattern(goal) {
 }
 
 /** Successful steps with free-text / select values blanked. */
+const ITEM = '$ITEM';
 function stepsFromHistory(history) {
   return (history || [])
     .filter((s) => s && s.action && s.outcome === 'ok')
@@ -28,6 +29,9 @@ function stepsFromHistory(history) {
       const params = {};
       if (s.params && 'text' in s.params) params.text = BLANK;
       if (s.params && 'value' in s.params) params.value = BLANK;
+      // An action that lived inside a repeated item (a card, a row) is stored generically: "pick the matching item",
+      // so a recipe learned on one item replays on any other. The concrete key is re-resolved at replay time.
+      if (s.itemKey) return { action: ITEM, kind: s.kind || null, params };
       return { action: s.action, params };
     });
 }
@@ -82,4 +86,4 @@ async function recordFailure(id, deps) {
   return deps.db.col(COLLECTION).findOne({ _id: id });
 }
 
-module.exports = { COLLECTION, BLANK, toGoalPattern, stepsFromHistory, find, saveFromHistory, markBroken, recordFailure };
+module.exports = { COLLECTION, BLANK, ITEM, toGoalPattern, stepsFromHistory, find, saveFromHistory, markBroken, recordFailure };

@@ -429,6 +429,8 @@
         const tStep = Date.now();
         const rec = await act(step.action, step.params, { tier: step.tier, confidence: step.confidence });
         page = rec.page; delete rec.page;
+        if (step.itemKey) rec.itemKey = step.itemKey;
+        if (step.kind) rec.kind = step.kind;
         history.push(rec);
         const detail = { index: i, step, record: rec, page, ms: Date.now() - tStep + (stepMs || 0) };
         emit(detail);

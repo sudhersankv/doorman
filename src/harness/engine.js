@@ -231,7 +231,25 @@ async function tierRecipe({ goal, page, history, config, deps, goalVector, trace
   const idx = history.filter((h) => h && h.tier === 'T1_recipe').length;
   const next = top.steps[history.length] || top.steps[idx];
   if (!next) return null;
-  const action = exposedActions(page, cfg).find((a) => a.key === next.action);
+  let action = null, chosenItem = null;
+  if (next.action === '$ITEM') {
+    // "pick the matching item": filter items by the goal's numeric constraints, let Jev choose, then use that item's action
+    const cons = constraints.parse(goal);
+    const cands = constraints.filterItems((page.items || []).filter((it) => (it.actionKeys || []).length), cons).slice(0, Math.max(1, cfg.context.maxItems | 0));
+    if (!cands.length) return null;
+    const criteria = {}; for (const it of cands) criteria[it.key] = clip(it.text, 100);
+    const state = buildState({ goal, page, history, config: cfg, recipes: found });
+    const res = await deps.jev.decide(state, { item: { type: 'choice', instructions: 'Which item best matches the goal (respecting its numeric constraints)?', criteria } });
+    trace.jevMs += res.ms || 0; trace.jevCalls++;
+    const pick = res.answers && res.answers.item;
+    if (!pick || typeof pick.confidence !== 'number' || pick.confidence < cfg.jev.confidenceThreshold) return null; // let the Jev tier decide instead
+    chosenItem = cands.find((it) => it.key === pick.choice);
+    if (!chosenItem) return null;
+    const exposed = exposedActions(page, cfg);
+    action = exposed.find((a) => (chosenItem.actionKeys || []).includes(a.key) && (!next.kind || a.kind === next.kind)) || exposed.find((a) => (chosenItem.actionKeys || []).includes(a.key));
+  } else {
+    action = exposedActions(page, cfg).find((a) => a.key === next.action);
+  }
   if (!action) return null;
   trace.recipeId = top._id;
   const params = { ...(next.params || {}) };
@@ -245,7 +263,8 @@ async function tierRecipe({ goal, page, history, config, deps, goalVector, trace
     if (action.kind === 'type' && blank(params.text)) params.text = filled.params.text;
     item = itemFor(page, action.key, filled.itemKey);
   }
-  const step = { action: action.key, params, tier: 'T1_recipe', confidence: Math.min(0.99, top.score), reason: `recipe "${clip(top.goalPattern, 60)}" step ${history.length + 1}`, recipes: found };
+  const step = { action: action.key, params, tier: 'T1_recipe', confidence: Math.min(0.99, top.score), reason: `recipe "${clip(top.goalPattern, 60)}" step ${history.length + 1}`, recipes: found, kind: action.kind };
+  if (chosenItem) item = chosenItem;
   if (item) step.itemKey = item.key;
   return step;
 }
@@ -271,7 +290,7 @@ async function tierLlm({ goal, page, history, config, deps, trace, state, hint }
   if (action.kind === 'type') step.params.text = String(p.text ?? p.value ?? constraints.candidatePhrases(goal)[0]);
   const item = itemFor(page, action.key, p.item);
   if (item) step.itemKey = item.key;
-  return { ...step, action: action.key };
+  return { ...step, action: action.key, kind: action.kind };
 }
 
 async function tierJev({ goal, page, history, config, deps, trace, recipes, force }) {
@@ -297,7 +316,7 @@ async function tierJev({ goal, page, history, config, deps, trace, recipes, forc
   const action = exposedActions(page, cfg).find((x) => x.key === next.choice);
   if (!action) return { step: null, state, low: { choice: next.choice, confidence } };
   const { params, itemKey } = await fillSlots({ goal, page, action, config: cfg, deps, trace });
-  const step = { action: action.key, params, tier: 'T1_jev', confidence, reason: `Jev chose ${action.kind} "${clip(action.name, 40)}"` };
+  const step = { action: action.key, params, tier: 'T1_jev', confidence, reason: `Jev chose ${action.kind} "${clip(action.name, 40)}"`, kind: action.kind };
   const item = itemFor(page, action.key, itemKey);
   if (item) step.itemKey = item.key;
   return { step, state };
