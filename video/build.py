@@ -144,22 +144,25 @@ def seg_clip(name, src, start, end, overlays=(), speed=1.0, zoom_hud=False, fade
     vf = f'[0:v]setpts=PTS/{speed},scale={W}:{H},fps={FPS}[v0]'
     cur = 'v0'
     if zoom_hud:  # magnify the bottom-right HUD into a picture-in-picture on the left
-        vf += f';[{cur}]split[a][b];[b]crop=420:330:{W-420}:{H-330},scale=840:660[hud];[a][hud]overlay=72:{H-660-72}[v1]'; cur = 'v1'
+        vf += f';[{cur}]split[a][b];[b]crop=420:560:{W-420}:{H-560},scale=735:980[hud];[a][hud]overlay=48:{H-980-50}[v1]'; cur = 'v1'
     for i, (_, t0, t1) in enumerate(overlays):
         vf += f";[{cur}][{i+1}:v]overlay=0:0:enable='between(t,{t0},{t1})'[v{i+2}]"; cur = f'v{i+2}'
     length = (end - start) / speed
     if fade: vf += f';[{cur}]fade=t=in:st=0:d=0.4,fade=t=out:st={max(0, length-0.5)}:d=0.5[vout]'; cur = 'vout'
     sh('ffmpeg', '-y', *inputs, '-filter_complex', vf, '-map', f'[{cur}]', '-t', length, *ENC, out); return out
 
-def seg_split(name, left_src, right_src, left_start, right_start, length, label_png, result_png, speed=1.0, tag=None, result_at=None):
+def seg_split(name, left_src, right_src, left_start, right_start, length, label_png, result_png, speed=1.0, tag=None, result_at=None, left_cap=1e9, right_cap=1e9):
     """Synchronized split screen: both clips start at their own 'goal started' offset, play at the same speed, with a
     live elapsed timer per side (real wall-clock from each clip's own frames). Shorter side holds its last frame."""
     out = WORK / f'{name}.mp4'
     half = W // 2
-    def side(i, src, start):
+    def side(i, src, start, cap):
+        # the stopwatch stops at the measured wall-clock of that run (cap seconds); after that the frame holds
+        T = f'min(t*{speed}\\,{cap:.3f})'
         return (f'[{i}:v]trim=start={start},setpts=(PTS-STARTPTS)/{speed},scale={half}:{H//2},pad={half}:{H}:0:{H//4}:color=0x06101a,tpad=stop_mode=clone:stop_duration=600,'
-                f"drawtext=fontfile={MONO}:text='%{{eif\\:t*{speed}\\:d}}.%{{eif\\:mod(t*{speed}*10\\,10)\\:d}} s':fontsize=44:fontcolor=white:box=1:boxcolor=0x06101a@0.8:boxborderw=14:x=w-tw-28:y=h-th-200[s{i}]")
-    vf = side(0, left_src, left_start) + ';' + side(1, right_src, right_start)
+                f"drawtext=fontfile={MONO}:text='%{{eif\\:{T}\\:d}}.%{{eif\\:mod({T}*10\\,10)\\:d}} s':fontsize=44:fontcolor=white:box=1:boxcolor=0x06101a@0.8:boxborderw=14:x=w-tw-28:y=h-th-200,"
+                f"drawtext=fontfile={MONO}:text='done':fontsize=30:fontcolor=0x00ed64:box=1:boxcolor=0x06101a@0.8:boxborderw=12:x=w-tw-28:y=h-th-140:enable='gte(t*{speed},{cap:.3f})'[s{i}]")
+    vf = side(0, left_src, left_start, left_cap) + ';' + side(1, right_src, right_start, right_cap)
     vf += f';[s0][s1]hstack[st];[st][2:v]overlay=0:0[l]'
     if result_png and result_at is not None: vf += f";[l][3:v]overlay=0:0:enable='gte(t,{result_at})'[r]"; last = 'r'
     else: last = 'l'
@@ -198,6 +201,18 @@ def main():
         sc = S['01-shop']; cap = caption_png('cap01', 'Trailhead Outfitters — the test site', 'A mock shop we built with four planted flaws as the answer key: an out-of-stock size, a ZIP validation bug, a buried sign-in link, lines it doesn\'t carry.')
         segs.append(seg_clip('s01', RAW / sc['file'], 0.3, min(sc['durationS'], 7.5), [(cap, 0.5, 7.5)]))
 
+
+    # 3b the handoff layer: tools exposed, direct call without inference
+    if '01b-tools' in S:
+        sc = S['01b-tools']; d = sc.get('discovery') or {}; calls = sc.get('calls') or []; cart = sc.get('cart') or []
+        ok = any((c.get('id') == 'road-racer' and str(c.get('size')) == '9') for c in cart)
+        line = f'{d.get("tools")} tools exposed from this page · manifest at /.well-known/doorman.json · WebMCP {"registered" if d.get("modelContext") else "not available in this browser"}'
+        claim(f'tools scene: {line}; direct calls {[(c["tool"], c["ms"]) for c in calls]}; cart has road-racer 9: {ok}', 'video/raw/scenes.json (01b-tools)')
+        cap_a = caption_png('cap-tools-a', 'The handoff layer: the page becomes tools', line)
+        cap_b = caption_png('cap-tools-b', 'An agent calls a tool directly — zero inference', ', '.join(f'{c["tool"]}({c["value"]})' if c.get('value') else f'{c["tool"]}()' for c in calls) + (' → cart verified: Road Racer size 9' if ok else ' → cart not updated'))
+        opened = next((m['t'] for m in sc['marks'] if m['label'] == 'tools-opened'), 2); first_call = next((m['t'] for m in sc['marks'] if m['label'].startswith('called')), opened + 3)
+        segs.append(seg_clip('s01b', RAW / sc['file'], 0.3, min(sc['durationS'], first_call + 8), [(cap_a, 0.3, first_call - 0.3 - 0.3), (cap_b, first_call - 0.3, 60)], zoom_hud=True))
+
     # 4 A/B split screen — the first technical payoff
     if ab:
         b, dm = ab['baseline'], ab['doorman']
@@ -219,7 +234,7 @@ def main():
         res = card_table('c04', 'What the recording measured', 'one goal · one run each', ['ordinary LLM agent', 'doorman'], res_lines,
                          f'Doorman also made {dm["jevCalls"]} Jev calls (~$0.04/M tokens, output free). Baseline cost is from the gateway\'s token usage; doorman\'s is estimated from step counts with the same assumptions as the dashboard. Model: {ab.get("model") or "—"}.')
         for lab, (x, y) in res_lines: claim(f'A/B {lab}: baseline {x} · doorman {y}', 'video/raw/ab.json')
-        segs.append(seg_split('s02', RAW / b['file'], RAW / dm['file'], b['startOffsetS'], dm['startOffsetS'], length, lbl, None, speed=speed, tag=tag))
+        segs.append(seg_split('s02', RAW / b['file'], RAW / dm['file'], b['startOffsetS'], dm['startOffsetS'], length, lbl, None, speed=speed, tag=tag, left_cap=b['ms'] / 1000, right_cap=dm['ms'] / 1000))
         segs.append(seg_card('c04', res, 9))
     else:
         segs.append(seg_card('c03x', card_title('c03x', 'A/B recording not available', 'video/raw/ab.json was not found; this build skips the side-by-side.', kicker='missing'), 3))
@@ -227,9 +242,9 @@ def main():
     # 5 aggregate benchmark
     if cmp_:
         A = cmp_['aggregate']; ba, da = A['baseline'], A['doorman']
-        rows = [('goals reached', [fmt_pct(ba['successRate']), fmt_pct(da['successRate'])]), ('median time', [fmt_ms(ba['medianMs']), fmt_ms(da['medianMs'])]), ('mean steps', [f'{ba["meanSteps"]:.1f}', f'{da["meanSteps"]:.1f}']), ('LLM calls, total', [ba['totalLlmCalls'], da['totalLlmCalls']]), ('inference cost, total', [fmt_usd(ba['totalCostUsd']) + ' measured', fmt_usd(da['totalCostUsd']) + ' est.'])]
+        rows = [('possible goals reached', [fmt_pct(ba.get('successPossible')), fmt_pct(da.get('successPossible'))]), ('impossible goals declined', [fmt_pct(ba.get('impossibleHandled')), fmt_pct(da.get('impossibleHandled'))]), ('median time', [fmt_ms(ba['medianMs']), fmt_ms(da['medianMs'])]), ('mean steps', [f'{ba["meanSteps"]:.1f}', f'{da["meanSteps"]:.1f}']), ('LLM calls, total', [ba['totalLlmCalls'], da['totalLlmCalls']]), ('inference cost, total', [fmt_usd(ba['totalCostUsd']) + ' measured', fmt_usd(da['totalCostUsd']) + ' est.'])]
         for lab, (x, y) in rows: claim(f'benchmark {lab}: baseline {x} · doorman {y} (n={A["n"]})', 'data/compare.json')
-        segs.append(seg_card('c05', card_table('c05', f'{A["n"]} matched goals, same site, both agents', 'aggregate · held-out benchmark goals · verified from shop state', ['ordinary LLM agent', 'doorman'], rows, f'Run {cmp_["runId"][:8]} against {cmp_["baseUrl"]}. Goals are the benchmark\'s held-out split (reworded, objective ground truth). Doorman ran with its active config and live recipe memory. Stored in the Atlas `comparisons` collection.'), 10))
+        segs.append(seg_card('c05', card_table('c05', f'{A["n"]} matched goals, same site, both agents', 'aggregate · held-out benchmark goals · verified from shop state', ['ordinary LLM agent', 'doorman'], rows, f'Run {cmp_["runId"][:8]} against {cmp_["baseUrl"]}. Held-out benchmark goals, objective ground truth, both agents verified from shop state. Neither agent declines the planted impossible goals yet — both loop to their step limit; that is the next thing to fix. Stored in the Atlas `comparisons` collection.'), 11))
 
     # 6 vague goal (honest), specific goal, memory
     for key, title, mk in [
@@ -268,9 +283,11 @@ def main():
         seed = next((v for v in evo if v.get('version') == 1), None)
         verdict_line = f'{len(evo)} versions · {len(kept)} kept · {len(rb)} rolled back · active: v{active["version"] if active else "?"}'
         if seed and seed.get('heldout'): verdict_line += f' · seed held-out success {fmt_pct(seed["heldout"].get("successPossible"))}, median {fmt_ms(seed["heldout"].get("medianMs"))}'
+        cand_line = ' · '.join(f'v{v["version"]}: {fmt_pct(v["heldout"].get("successPossible"))} success, median {fmt_ms(v["heldout"].get("medianMs"))} → {v.get("verdict","?").replace("_"," ")}' for v in evo if v.get('heldout') and v.get('version') != 1) or 'no candidates yet'
+        claim(f'evolution candidates: {cand_line}', 'video/raw/scenes.json (06-evolution.evolution)')
         claim(f'evolution: {verdict_line}', 'video/raw/scenes.json (06-evolution.evolution, read from /api/evolution)')
         honest = ('Every candidate was executed for real and lost to the seed on held-out goals — so none was kept. That is the loop working as regression protection: it measured, and refused to keep what did not help.' if not kept else f'{len(kept)} candidate(s) measured better on held-out goals and became active; {len(rb)} were rolled back.')
-        caps = [('Every version, every patch, every verdict', verdict_line), ('The patch the editor proposed, as a diff', 'Validated by code: confirm list append-only, thresholds bounded, checkout never removable.'), ('Before → after on held-out goals', honest), ('Procedural memory vs harness evolution', 'Recipes (memory) made visits faster on the same config. Config evolution is judged separately, and today it kept nothing.')]
+        caps = [('Every version, every patch, every verdict', verdict_line), ('The patch the editor proposed, as a diff', 'Validated by code: confirm list append-only, thresholds bounded, checkout never removable.'), ('Before → after on held-out goals, n=23', cand_line), ('The verdicts', honest), ('Procedural memory vs harness evolution', 'Recipes (memory) made visits faster on the same config. Config evolution is judged separately, and today it kept nothing.')]
         L = min(sc['durationS'], 26); ov = []; per = L / len(caps)
         for i, (t, s) in enumerate(caps): ov.append((caption_png(f'cap-evo-{i}', t, s), i * per + 0.2, (i + 1) * per - 0.2))
         segs.append(seg_clip('s06', RAW / sc['file'], 0.2, 0.2 + L, ov))

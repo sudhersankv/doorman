@@ -110,6 +110,38 @@ async function clearShopState(page) { await page.evaluate(() => { for (const k o
     await s.finish();
   }
 
+
+  // ── scene 1b: the handoff layer itself — tools exposed, an agent calls one directly (no inference) ──
+  if (want('01b-tools')) {
+    const s = await newScene(browser, '01b-tools');
+    await s.page.goto(BASE + '/shop/#/product/road-racer', { waitUntil: 'networkidle' });
+    await clearShopState(s.page);
+    await s.page.goto(BASE + '/shop/#/product/road-racer', { waitUntil: 'networkidle' });
+    await s.page.waitForSelector('#doorman-tools-btn');
+    await sleep(1200); s.mark('loaded');
+    const disc = await s.page.evaluate(async () => ({ manifest: await fetch('/.well-known/doorman.json').then((r) => r.json()).catch(() => null), meta: document.querySelector('meta[name="agent-tools"]')?.content || null, modelContext: !!(document.modelContext && document.modelContext.registerTool), tools: window.doorman.tools().length }));
+    const btn = await s.page.locator('#doorman-tools-btn').boundingBox();
+    await glide(s.page, btn.x + btn.width / 2, btn.y + btn.height / 2, 35); await s.page.mouse.click(btn.x + btn.width / 2, btn.y + btn.height / 2); s.mark('tools-opened');
+    await sleep(2500);
+    const calls = [];
+    const callTool = async (re, value) => {
+      const idx = await s.page.evaluate((re) => [...document.querySelectorAll('#doorman-tool-list code')].findIndex((c) => new RegExp(re, 'i').test(c.textContent)), re);
+      if (idx < 0) return null;
+      const row = s.page.locator('#doorman-tool-list li').nth(idx);
+      await row.scrollIntoViewIfNeeded();
+      if (value != null) { const inp = row.locator('input'); if (await inp.count()) { const b = await inp.boundingBox(); await glide(s.page, b.x + 20, b.y + b.height / 2, 25); await s.page.mouse.click(b.x + 20, b.y + b.height / 2); await s.page.keyboard.type(String(value), { delay: 60 }); } }
+      const cb = await row.locator('button').boundingBox(); await glide(s.page, cb.x + cb.width / 2, cb.y + cb.height / 2, 25);
+      const t0 = Date.now(); await s.page.mouse.click(cb.x + cb.width / 2, cb.y + cb.height / 2); await sleep(900);
+      const name = await s.page.evaluate((i) => document.querySelectorAll('#doorman-tool-list code')[i]?.textContent, idx);
+      calls.push({ tool: name, value, ms: Date.now() - t0 }); s.mark('called ' + name); return name;
+    };
+    await callTool('^size$', '9'); await sleep(800);
+    await callTool('^add_to_cart$'); await sleep(1500);
+    const cart = await s.page.evaluate(() => { try { return (JSON.parse(localStorage.getItem('trailhead_state_v1')) || {}).cart; } catch { return null; } });
+    await sleep(1500);
+    await s.finish({ discovery: disc, calls, cart });
+  }
+
   // ── scene 2: a vague goal, delegated in natural language (may fail — recorded as it happens) ──
   if (want('02-vague-goal')) {
     const s = await newScene(browser, '02-vague-goal');
