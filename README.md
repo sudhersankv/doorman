@@ -68,6 +68,18 @@ runs unchanged on the second fixture site (a clinic booking page, `test/fixtures
 
 Traffic is simulated (Playwright agents) on a site we built. Real sites will score lower; the next step is real agent traffic.
 
+## Results (final run, real services, held-out goals)
+
+| | v1 cold | v4 active |
+|---|---|---|
+| Success on possible goals | 93% | 93% (from an 86% same-conditions baseline) |
+| Median time per goal | 4.0 s | 2.8 s |
+| Steps decided by the LLM | 30% | 28% (the rest by Jev and recipes) |
+| Generations | 3: 1 kept, 2 rolled back, $0.003 of LLM | |
+
+Kept edit (v4): rewrote the fast model's instructions, added `checkout` to the confirmation list, added a form-validation rule.
+Rolled back: raising the confidence threshold (slower), a search-synonyms description with a lower threshold (one more failure).
+
 ## Run it
 
 ```
