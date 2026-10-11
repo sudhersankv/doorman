@@ -2,26 +2,33 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Doorman — harness evolution</title>
+<title>doorman — harness evolution</title>
 <meta name="description" content="How this site's agent harness evolved: every version, the patch proposed, the held-out benchmark before and after, and the verdict.">
 <style>
 :root{
-  --bg:#edf0f3;--surface:#ffffff;--surface-2:#f6f8fa;--ink:#1a2130;--muted:#5f6a7a;--faint:#8b95a5;--line:#d4dae2;--line-strong:#b9c2cd;
-  --brass:#9a6b12;--brass-ink:#7a5407;--brass-bg:#f4ead3;--red:#a8413a;--red-bg:#f6e2df;--slate:#4a5a70;
+  --bg:#06101a;--surface:#0e1b27;--surface-2:#132333;--ink:#e8eef4;--muted:#8da1b4;--faint:#5e7284;--line:#1b2c3b;--line-strong:#26394b;
+  --brass:#00ed64;--brass-ink:#5cf59a;--brass-bg:rgba(0,237,100,.12);--red:#ff6b6b;--red-bg:rgba(255,107,107,.12);--slate:#9fb0c8;
   --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
-  color-scheme:light dark;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme:dark){:root{
-  --bg:#0e1218;--surface:#161c25;--surface-2:#1c232e;--ink:#e3e7ed;--muted:#8f9aaa;--faint:#6b7686;--line:#283140;--line-strong:#394459;
-  --brass:#d9aa4f;--brass-ink:#e8c37a;--brass-bg:#2b2412;--red:#e27d73;--red-bg:#3a1f1d;--slate:#9fb0c8;
-}}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark}}
 *{box-sizing:border-box}
 html{background:var(--bg)}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+body{margin:0;background:radial-gradient(1200px 500px at 15% -10%,rgba(0,237,100,.10),transparent 60%),var(--bg);color:var(--ink);font:15px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
 a{color:inherit}
 .wrap{max-width:1100px;margin:0 auto;padding:28px 16px 72px}
-header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding-bottom:18px;border-bottom:1px solid var(--line-strong)}
+.bar-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 0 18px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink)}
+.brand svg{width:38px;height:38px;flex:none;filter:drop-shadow(0 0 10px rgba(0,237,100,.22))}
+.brand .word{font-size:1.45rem;font-weight:700;letter-spacing:-.03em;line-height:1}
+.brand .word i{font-style:normal;color:var(--brass)}
+.brand .tag-line{display:block;font-size:.74rem;color:var(--muted);margin-top:3px;font-weight:500}
+.bar-top nav.pages{display:flex;gap:4px;margin:0}
+.bar-top nav.pages a{padding:6px 12px;border-radius:999px;border:1px solid transparent}
+.bar-top nav.pages a[aria-current]{color:var(--brass);border-color:#00684a;background:var(--brass-bg)}
+.bar-top nav.pages span{display:none}
+header.top{border-bottom:0;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding-bottom:18px;border-bottom:1px solid var(--line-strong)}
 header.top h1{font-size:1.75rem;line-height:1.15;font-weight:650;letter-spacing:-.015em;margin:0}
 header.top p{margin:6px 0 0;color:var(--muted);max-width:60ch}
 .badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px 6px 8px;background:var(--surface);font-size:.9rem;white-space:nowrap}
@@ -127,11 +134,17 @@ table.bench td.after{font-weight:650}
 </head>
 <body>
 <div class="wrap">
+  <div class="bar-top">
+    <a class="brand" href="/dashboard/" aria-label="doorman">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="4" y="3" width="22" height="34" rx="3" fill="#0e1b27" stroke="#00ed64" stroke-width="2"/><rect x="8" y="7" width="14" height="26" rx="1.5" fill="none" stroke="#00684a" stroke-width="1.5"/><circle cx="19.5" cy="21" r="1.6" fill="#00ed64"/><circle cx="31" cy="13" r="4" fill="#00ed64"/><path d="M26.5 11.2h9a1 1 0 0 0 0-2h-9a1 1 0 0 0 0 2z" fill="#00ed64"/><path d="M25 37v-9.5c0-3.3 2.7-6 6-6s6 2.7 6 6V37" fill="#00ed64"/></svg>
+      <span><span class="word"><i>door</i>man</span><span class="tag-line">a self-improving harness at your website's door</span></span>
+    </a>
+    <nav class="pages" aria-label="Pages"><a id="shop-link" href="/shop/">site</a><a id="dash-link" href="/dashboard/">intent analytics</a><a href="/evolution/" aria-current="page">evolution</a></nav>
+  </div>
   <header class="top">
     <div>
-      <h1>Harness evolution</h1>
+      <h1>harness evolution</h1>
       <p id="sub">Loading versions…</p>
-      <nav class="pages" aria-label="Pages"><a href="/evolution/" aria-current="page">Evolution</a><span>/</span><a id="dash-link" href="/dashboard/">Traffic dashboard</a><span>/</span><a id="shop-link" href="/shop/">Site</a></nav>
     </div>
     <div class="badge" id="badge" hidden><span class="dot" aria-hidden="true"></span><span class="site" id="badge-site"></span><span>active</span><span class="v" id="badge-v"></span></div>
   </header>
