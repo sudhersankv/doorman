@@ -2,16 +2,22 @@
   "name": "doorman",
   "version": "0.1.0",
   "private": true,
-  "description": "A self-improving harness at a website's door for visiting AI agents (MongoDB Atlas + Jev).",
+  "description": "A self-improving harness at a website's door for visiting AI agents. MongoDB Atlas + Jev (System 1) + an editor that rewrites the harness config and proves each change on held-out goals.",
   "main": "server.js",
   "scripts": {
     "dev": "node --watch server.js",
     "start": "node server.js",
+    "test": "node --test test/",
+    "test:unit": "node --test test/unit/",
+    "test:e2e": "node --test test/e2e/",
+    "setup-db": "node scripts/setup-db.js",
+    "check": "node scripts/check-services.js",
+    "goals": "node src/sim/goals.js",
+    "bench": "node src/sim/run.js",
+    "evolve": "node src/harness/evolve.js",
     "verify:demo": "node src/sim/verify-demo.js"
   },
   "dependencies": {
-    "dotenv": "^16.5.0",
-    "express": "^4.21.2",
     "mongodb": "^6.17.0",
     "playwright": "^1"
   }
