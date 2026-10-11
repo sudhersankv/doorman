@@ -2,7 +2,7 @@
 cd /d "%~dp0"
 REM One-click Fly.io deploy. Uses the Fly token from D:\kevin\FLY_API_TOKEN.txt and secrets from .env (never committed).
 set /p FLY_API_TOKEN=<..\kevin\FLY_API_TOKEN.txt
-set FLY_API_TOKEN=%FLY_API_TOKEN: =%
+REM token is "FlyV1 fm2_..." - the space is part of it; do not strip it
 echo Checking fly CLI...
 fly version || (echo fly CLI not found. Install from https://fly.io/docs/flyctl/install/ && pause && exit /b 1)
 echo Creating app (ignore "already exists")...

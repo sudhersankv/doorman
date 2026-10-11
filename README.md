@@ -83,6 +83,20 @@ was kept. The gain that did hold is memory: recipes learned from visits cut medi
 An earlier version of the loop measured candidates as the active config by mistake and "kept" versions by noise; the fix and the
 test are in `test/e2e/version-selection.test.js`.
 
+## Live deployment
+
+Running on Fly.io (SJC) against the hackathon Atlas sandbox, Jev and the Neon AI Gateway, keys held as Fly secrets:
+
+- shop: https://doorman-trailhead.fly.dev/shop/ — open the console and run `await doorman.do('Add the Road Racer in size 9 to my cart.')`
+- owner analytics: https://doorman-trailhead.fly.dev/dashboard/
+- evolution evidence: https://doorman-trailhead.fly.dev/evolution/
+- manifest: https://doorman-trailhead.fly.dev/.well-known/doorman.json
+
+Verified after deploy: a goal run from the page completed in 1.8 s with three Jev decisions and appeared in the
+analytics within a second. Benchmark and evolution runs are CLI-only (`npm run bench`, `npm run evolve`) and are not
+exposed as HTTP endpoints; the public POST endpoints are rate-limited per IP and globally, and LLM spend is capped
+by the server-side budget meter. External-agent test results, including the failure, are in `docs/EXTERNAL-AGENT-TEST.md`.
+
 ## Run it
 
 ```
