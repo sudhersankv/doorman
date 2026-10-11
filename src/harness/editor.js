@@ -14,9 +14,10 @@ const METRIC_KEYS = ['successPossible', 'impossibleHandled', 'medianMs', 'llmFal
 /** Allowed patch paths + bounds, verbatim from CONTRACTS.md §4 (shown to the LLM). */
 const ALLOWED_PATHS_TEXT = [
   'Patch = JSON-Patch subset [{op:"replace"|"add"|"remove", path, value}].',
-  'Allowed paths: /tools/<key>/(description|exposed|precondition), /context/(includeMessages|includeItems|maxItems|historySteps|recipesTopK),',
+  'Allowed paths: /tools/<key>/(description|exposed|precondition), /context/(includeMessages|includeItems|maxItems|historySteps|recipesTopK|recipeMinScore ∈ [0.75,0.97]),',
   '/jev/nextInstructions, /jev/confidenceThreshold ∈ [0.5,0.95], /guardrails/maxSteps ∈ [4,12], /guardrails/impossibleThreshold ∈ [0.6,0.95],',
   '/guardrails/confirm/- (add only; remove never allowed), /rules/- and /rules/<i> (replace/remove ok). Max 3 ops. Anything else → error.',
+  'Guidance: /guardrails/confirm entries must be EXISTING action keys from the tools list. Prefer small, testable edits; a higher confidenceThreshold sends more steps to the slow model, a lower one trusts the fast model more; recipeMinScore controls how similar a past goal must be before its recipe is replayed.',
 ].join('\n');
 
 // ---------- visits access (module per §8, with a built-in fallback on the `visits` collection) ----------
@@ -160,13 +161,15 @@ const pickMetrics = (m) => { if (!m) return null; const o = {}; for (const k of 
  * @param {{ siteId: string, deps: object, runGoals: (split:string, configVersion:number) => Promise<object>, keepRule?: Function, trainFirst?: boolean, maxOps?: number }} args
  * @returns {Promise<{ from:number, to:number|null, patch:Array, rationale:string, verdict:'kept'|'rolled_back'|'no_patch', before:object|null, after:object|null, errors?: string[] }>}
  */
-async function evolveOnce({ siteId, deps, runGoals, keepRule = keepRuleDefault, trainFirst = true, maxOps = 3 }) {
+async function evolveOnce({ siteId, deps, runGoals, keepRule = keepRuleDefault, trainFirst = true, maxOps = 3, reuseBaseline = false }) {
+  const opts = { reuseBaseline };
   const log = deps.log || (() => {});
   const current = await cfg.loadActive(siteId, deps);
   const from = current.version;
 
-  // Baseline on held-out goals (reuse if already evaluated).
-  let before = current.eval && current.eval.heldout ? current.eval.heldout : null;
+  // Baseline on held-out goals. Re-measured every generation unless `reuseBaseline` is set: recipes and visits
+  // accumulate between generations, so a stale "before" would not be comparable with the fresh "after".
+  let before = opts.reuseBaseline && current.eval && current.eval.heldout ? current.eval.heldout : null;
   if (!before) {
     before = pickMetrics(await runGoals('heldout', from));
     await cfg.setEval(siteId, from, { eval: { ...(current.eval || {}), heldout: before }, verdict: current.verdict ?? null }, deps);
@@ -208,10 +211,10 @@ async function evolveOnce({ siteId, deps, runGoals, keepRule = keepRuleDefault, 
  * @param {{ siteId: string, generations?: number, deps: object, runGoals: Function, onGeneration?: (result:object, i:number) => any, keepRule?: Function, trainFirst?: boolean, maxOps?: number }} args
  * @returns {Promise<object[]>} results of each generation
  */
-async function evolve({ siteId, generations = 3, deps, runGoals, onGeneration, keepRule, trainFirst, maxOps }) {
+async function evolve({ siteId, generations = 3, deps, runGoals, onGeneration, keepRule, trainFirst, maxOps, reuseBaseline }) {
   const results = [];
   for (let i = 0; i < generations; i++) {
-    const r = await evolveOnce({ siteId, deps, runGoals, keepRule, trainFirst, maxOps });
+    const r = await evolveOnce({ siteId, deps, runGoals, keepRule, trainFirst, maxOps, reuseBaseline });
     results.push(r);
     if (onGeneration) await onGeneration(r, i);
   }

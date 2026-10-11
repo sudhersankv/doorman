@@ -15,6 +15,7 @@ const BOUNDS = {
   '/context/maxItems': { min: 4, max: 30, int: true },
   '/context/historySteps': { min: 1, max: 8, int: true },
   '/context/recipesTopK': { min: 1, max: 5, int: true },
+  '/context/recipeMinScore': { min: 0.75, max: 0.97 },
 };
 const LIMITS = { description: 300, nextInstructions: 600, rule: 200, precondition: 300 };
 
@@ -30,7 +31,7 @@ function defaultConfig(siteId, { actionKeys = [] } = {}) {
   return {
     siteId, version: 1, parent: null, active: true, createdBy: 'seed',
     tools: {},
-    context: { includeMessages: true, includeItems: true, maxItems: 12, historySteps: 4, recipesTopK: 3 },
+    context: { includeMessages: true, includeItems: true, maxItems: 12, historySteps: 4, recipesTopK: 3, recipeMinScore: 0.88 },
     jev: {
       nextInstructions: 'Choose the single action that moves closest to completing the goal on THIS page. Choose `done` only if the goal is clearly already achieved.',
       confidenceThreshold: 0.70,
@@ -222,7 +223,7 @@ function summarizeForPrompt(config) {
     ? tools.slice(0, 12).map(([k, t]) => `${k}${t.exposed === false ? '[hidden]' : ''}${t.description ? '="' + cut(t.description, 40) + '"' : ''}${t.precondition ? ' if:' + cut(t.precondition, 30) : ''}`).join('; ')
     : 'none (all page actions exposed, no descriptions)'));
   const c = config.context;
-  lines.push(`context: messages=${c.includeMessages} items=${c.includeItems} maxItems=${c.maxItems} historySteps=${c.historySteps} recipesTopK=${c.recipesTopK}`);
+  lines.push(`context: messages=${c.includeMessages} items=${c.includeItems} maxItems=${c.maxItems} historySteps=${c.historySteps} recipesTopK=${c.recipesTopK} recipeMinScore=${c.recipeMinScore ?? 0.88}`);
   lines.push(`jev: confidenceThreshold=${config.jev.confidenceThreshold} nextInstructions="${cut(config.jev.nextInstructions, 300)}"`);
   const g = config.guardrails;
   lines.push(`guardrails: maxSteps=${g.maxSteps} impossibleThreshold=${g.impossibleThreshold} confirm=[${g.confirm.join(', ')}]`);

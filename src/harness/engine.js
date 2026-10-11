@@ -8,7 +8,7 @@ const { parseJson } = require('../lib/llm');
 
 const FAILURE_REASONS = ['not_found', 'validation_error', 'login_required', 'unavailable', 'blocked', 'other'];
 const MAX_STATE_CHARS = 6000;
-const RECIPE_MIN_SCORE = 0.8;
+const RECIPE_MIN_SCORE = 0.88; // default; config.context.recipeMinScore overrides (the editor may tune it)
 
 const DEFAULTS = {
   version: 0,
@@ -227,7 +227,8 @@ async function tierRecipe({ goal, page, history, config, deps, goalVector, trace
   try { found = await deps.recipes.find({ siteId: page.siteId, goalVector: vec, topK: cfg.context.recipesTopK, deps }); } catch { return null; }
   if (!found || !found.length) return null;
   const top = found[0];
-  if (!(top.score >= RECIPE_MIN_SCORE) || !Array.isArray(top.steps)) return null;
+  const minScore = typeof cfg.context.recipeMinScore === 'number' ? cfg.context.recipeMinScore : RECIPE_MIN_SCORE;
+  if (!(top.score >= minScore) || !Array.isArray(top.steps)) return null;
   const idx = history.filter((h) => h && h.tier === 'T1_recipe').length;
   const next = top.steps[history.length] || top.steps[idx];
   if (!next) return null;

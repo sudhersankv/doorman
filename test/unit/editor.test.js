@@ -139,7 +139,7 @@ test('(d) evolve: 2 generations chain versions; baseline reused from stored eval
   await seedWithVisits(deps);
   const runGoals = scriptedRunGoals({ 1: BASE, 2: { ...BASE, successPossible: 0.70 }, 3: { ...BASE, successPossible: 0.80 } });
   const seen = [];
-  const results = await editor.evolve({ siteId: SITE, generations: 2, deps, runGoals, onGeneration: (r, i) => seen.push([i, r.verdict]) });
+  const results = await editor.evolve({ siteId: SITE, generations: 2, deps, runGoals, reuseBaseline: true, onGeneration: (r, i) => seen.push([i, r.verdict]) });
   assert.equal(results.length, 2);
   assert.deepEqual(results.map((r) => [r.from, r.to, r.verdict]), [[1, 2, 'kept'], [2, 3, 'kept']]);
   assert.deepEqual(seen, [[0, 'kept'], [1, 'kept']]);

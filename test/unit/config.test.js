@@ -9,7 +9,7 @@ test('defaultConfig: contract defaults + confirm seeded from action keys', () =>
   assert.equal(c.siteId, 'site1');
   assert.equal(c.version, 1); assert.equal(c.parent, null); assert.equal(c.active, true); assert.equal(c.createdBy, 'seed');
   assert.deepEqual(c.tools, {});
-  assert.deepEqual(c.context, { includeMessages: true, includeItems: true, maxItems: 12, historySteps: 4, recipesTopK: 3 });
+  assert.deepEqual(c.context, { includeMessages: true, includeItems: true, maxItems: 12, historySteps: 4, recipesTopK: 3, recipeMinScore: 0.88 });
   assert.equal(c.jev.confidenceThreshold, 0.70);
   assert.equal(c.guardrails.maxSteps, 8); assert.equal(c.guardrails.impossibleThreshold, 0.80);
   assert.deepEqual(c.guardrails.confirm, ['place_order', 'pay_now', 'confirm_booking']);
