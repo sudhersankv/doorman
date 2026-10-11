@@ -36,7 +36,8 @@ function loadEnv(file = path.join(__dirname, '..', '..', '.env')) {
   let text;
   try { text = fs.readFileSync(file, 'utf8'); } catch { return {}; }
   const parsed = parseEnv(text);
-  for (const [k, v] of Object.entries(parsed)) if (process.env[k] == null || process.env[k] === '') process.env[k] = v;
+  // .env wins over a stale machine-wide variable (opt out with DOORMAN_ENV_NO_OVERRIDE=1)
+  for (const [k, v] of Object.entries(parsed)) if (process.env.DOORMAN_ENV_NO_OVERRIDE !== '1' || process.env[k] == null || process.env[k] === '') process.env[k] = v;
   return parsed;
 }
 
