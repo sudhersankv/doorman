@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Doorman — how this harness evolved</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1b2230;--muted:#5b6577;--line:#dfe3ea;--card:#fff;--accent:#a8741a;--ok:#2f7d4f;--bad:#b3261e;--mono:ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#11151d;--fg:#e6e9ef;--muted:#9aa4b6;--line:#2a3242;--card:#171d28;--accent:#d9a648;--ok:#5fbf86;--bad:#e07070}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,Segoe UI,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:24px 16px 60px}h1{font-size:1.6rem;margin:0 0 4px}h2{font-size:1.1rem;margin:28px 0 8px}.muted{color:var(--muted)}
+.row{display:flex;gap:12px;flex-wrap:wrap}.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:150px;flex:1}
+.tile b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums}.tile span{font-size:.8rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ver{display:grid;grid-template-columns:70px 1fr;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0}
+.vnum{font-family:var(--mono);font-weight:700}.kept{color:var(--ok);font-weight:700}.rolled_back{color:var(--bad);font-weight:700}.no_patch{color:var(--muted)}
+code{font-family:var(--mono);font-size:.85em;background:rgba(127,127,127,.12);padding:1px 5px;border-radius:4px}
+.patch{font-family:var(--mono);font-size:.8rem;white-space:pre-wrap;margin:6px 0 0}
+svg{width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
+.note{border-left:3px solid var(--accent);padding:4px 12px;margin:10px 0}
+</style>
+</head>
+<body><div class="wrap">
+<h1>How this harness evolved</h1>
+<p class="muted" id="sub">Loading…</p>
+<div class="row" id="tiles"></div>
+<h2>Success on possible goals, per version (held-out)</h2>
+<div id="chart"></div>
+<h2>Versions</h2>
+<div id="versions"></div>
+<p class="note">Each version is a document in MongoDB Atlas with a parent link, the patch the editor proposed, the held-out metrics before and after, and the verdict. Rolled-back versions are kept as evidence.</p>
+<h2>Benchmark runs</h2>
+<div id="runs"></div>
+</div>
+<script>
+const site = new URLSearchParams(location.search).get('site') || 'trailhead';
+const $ = (s) => document.querySelector(s);
+const pct = (x) => x == null ? '—' : (Math.round(x * 1000) / 10) + '%';
+const ms = (x) => x == null ? '—' : Math.round(x) + ' ms';
+function metricsOf(v) { return (v.eval && (v.eval.after || v.eval.heldout)) || null; }
+(async () => {
+  const [evo, runs] = await Promise.all([
+    fetch(`/api/evolution?site=${site}`).then((r) => r.json()).catch(() => null),
+    fetch(`/api/runs?site=${site}`).then((r) => r.json()).catch(() => null),
+  ]);
+  const versions = (evo && (evo.versions || evo)) || [];
+  if (!Array.isArray(versions) || !versions.length) { $('#sub').textContent = 'No harness versions yet for site "' + site + '". Run the pipeline first.'; return; }
+  const active = versions.find((v) => v.active) || versions[versions.length - 1];
+  const first = versions[0], fm = metricsOf(first), am = metricsOf(active);
+  $('#sub').textContent = `Site "${site}" · ${versions.length} version${versions.length > 1 ? 's' : ''} · active v${active.version} · ${versions.filter((v) => v.verdict === 'kept').length} kept, ${versions.filter((v) => v.verdict === 'rolled_back').length} rolled back`;
+  const tiles = [
+    ['Success on possible goals', `${pct(fm && fm.successPossible)} → ${pct(am && am.successPossible)}`, 'v1 → active, held-out'],
+    ['Impossible goals answered "no"', `${pct(fm && fm.impossibleHandled)} → ${pct(am && am.impossibleHandled)}`, 'fast, correct refusals'],
+    ['Median time per goal', `${ms(fm && fm.medianMs)} → ${ms(am && am.medianMs)}`, 'includes page actions'],
+    ['Steps needing the LLM', `${pct(fm && fm.llmFallbackRate)} → ${pct(am && am.llmFallbackRate)}`, 'rest decided by Jev / recipes'],
+    ['Recipe hits (held-out)', `${pct(fm && fm.recipeHitRate)} → ${pct(am && am.recipeHitRate)}`, 'learned step sequences reused'],
+  ];
+  $('#tiles').innerHTML = tiles.map(([l, v, s]) => `<div class="tile"><span>${l}</span><b style="font-size:1.1rem">${v}</b><span>${s}</span></div>`).join('');
+  // chart
+  const pts = versions.map((v) => ({ x: v.version, y: (metricsOf(v) || {}).successPossible, verdict: v.verdict, active: v.active })).filter((p) => p.y != null);
+  if (pts.length) {
+    const W = 900, H = 260, L = 50, R = 20, T = 20, B = 40;
+    const xs = (x) => L + (pts.length === 1 ? (W - L - R) / 2 : (x - pts[0].x) / (pts[pts.length - 1].x - pts[0].x || 1) * (W - L - R));
+    const ys = (y) => T + (1 - y) * (H - T - B);
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="success on possible goals by version">`;
+    for (const g of [0, .25, .5, .75, 1]) s += `<line x1="${L}" x2="${W - R}" y1="${ys(g)}" y2="${ys(g)}" stroke="var(--line)"/><text x="${L - 8}" y="${ys(g) + 4}" font-size="11" text-anchor="end" fill="var(--muted)">${g * 100}%</text>`;
+    s += `<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${pts.map((p) => `${xs(p.x)},${ys(p.y)}`).join(' ')}"/>`;
+    for (const p of pts) s += `<circle cx="${xs(p.x)}" cy="${ys(p.y)}" r="${p.active ? 7 : 5}" fill="${p.verdict === 'rolled_back' ? 'var(--bad)' : 'var(--accent)'}"/><text x="${xs(p.x)}" y="${H - 14}" font-size="12" text-anchor="middle" fill="var(--muted)">v${p.x}${p.active ? ' (active)' : ''}${p.verdict === 'rolled_back' ? ' rolled back' : ''}</text>`;
+    s += '</svg>';
+    $('#chart').innerHTML = s;
+  }
+  // versions
+  $('#versions').innerHTML = versions.map((v) => {
+    const m = metricsOf(v), before = v.eval && v.eval.before;
+    const patch = (v.patch || []).map((op) => `${op.op} ${op.path}${op.value !== undefined ? ' = ' + JSON.stringify(op.value) : ''}`).join('\n');
+    return `<div class="ver"><div class="vnum">v${v.version}${v.active ? '<br><span class="kept">active</span>' : ''}</div><div>
+      <div><b>${v.createdBy === 'editor' ? 'Proposed by the editor' : 'Seed configuration'}</b>${v.parent != null ? ` · parent v${v.parent}` : ''}${v.verdict ? ` · <span class="${v.verdict}">${v.verdict.replace('_', ' ')}</span>` : ''}</div>
+      ${v.rationale ? `<div class="muted">${v.rationale}</div>` : ''}
+      ${patch ? `<div class="patch">${patch}</div>` : ''}
+      ${v.rules && v.rules.length ? `<div>Rules: ${v.rules.map((r) => `<code>${r}</code>`).join(' ')}</div>` : ''}
+      ${m ? `<div class="muted">held-out: success on possible ${pct(m.successPossible)}${before ? ` (was ${pct(before.successPossible)})` : ''} · impossible handled ${pct(m.impossibleHandled)} · median ${ms(m.medianMs)} · LLM steps ${pct(m.llmFallbackRate)}</div>` : ''}
+      ${v.metrics && v.metrics.n ? `<div class="muted">${v.metrics.n} visits logged on this version</div>` : ''}
+    </div></div>`;
+  }).join('');
+  // runs
+  const rs = (runs && (runs.runs || runs)) || [];
+  if (Array.isArray(rs) && rs.length) {
+    $('#runs').innerHTML = `<table><tr><th>When</th><th>Split</th><th>Config</th><th>Goals</th><th>Success (possible)</th><th>Impossible handled</th><th>Median</th><th>LLM steps</th></tr>${rs.slice().reverse().map((r) => { const m = r.metrics || {}; return `<tr><td>${(r.finishedAt || r.startedAt || '').replace('T', ' ').slice(0, 19)}</td><td>${r.split}</td><td>v${r.configVersion}</td><td>${m.n ?? ''}</td><td>${pct(m.successPossible)}</td><td>${pct(m.impossibleHandled)}</td><td>${ms(m.medianMs)}</td><td>${pct(m.llmFallbackRate)}</td></tr>`; }).join('')}</table>`;
+  } else $('#runs').innerHTML = '<p class="muted">No benchmark runs yet.</p>';
+})();
+</script>
+</body></html>

@@ -183,7 +183,12 @@ async function evolveOnce({ siteId, deps, runGoals, keepRule = keepRuleDefault, 
     return { from, to: null, patch: [], rationale: proposal.rationale, verdict: 'no_patch', before, after: null, errors: proposal.errors || [] };
   }
 
-  const candidate = await cfg.saveVersion(cfg.applyPatch(current, proposal.patch), deps);
+  const draft = cfg.applyPatch(current, proposal.patch);
+  // version numbers are allocated from the site's history (max+1), not parent+1: after a rollback the
+  // active config is still the old one and parent+1 would collide with the rolled-back version.
+  const all = await cfg.history(siteId, deps);
+  draft.version = Math.max(current.version, ...all.map((v) => v.version || 0)) + 1;
+  const candidate = await cfg.saveVersion(draft, deps);
   const to = candidate.version;
   const evalDoc = {};
   if (trainFirst) evalDoc.train = pickMetrics(await runGoals('train', to));
