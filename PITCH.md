@@ -41,12 +41,17 @@ goals it didn't see, and rollbacks are stored as evidence.
 **"Why MongoDB not Postgres?"** Nested per-site config, version chains, vectors next to data, one DB.
 **"Business?"** Free script, paid insight for owners; later a no-install agent-side version.
 
-## Numbers (fill after B5)
-| Metric | v1 | v2 | v3 | v4 |
-|---|---|---|---|---|
-| Success on possible goals (held-out) | | | | |
-| Fast correct "no" on impossible goals | | | | |
-| Median ms per goal | | | | |
-| LLM fallback rate | | | | |
-| Recipe-hit rate (held-out) | | | | |
-| Edit → verdict | — | | | |
+## Numbers (run 2, real Jev, held-out 23 goals: 14 possible, 9 impossible) — replace with run 3 if better
+| Metric | v1 (seed) | v4 (active, kept) | note |
+|---|---|---|---|
+| Success on possible goals | 79% (11/14) | 79% (11/14) | the same 3 goals fail every version: two need the footer sign-in, one is an 8-step order |
+| Median time per goal | 4.7 s | 3.8 s | kept on the latency rule (−18%) |
+| Steps needing the LLM | 1.5% | 1.5% | everything else decided by Jev |
+| Impossible goals answered "no" fast | 22% (2/9) | 22% | out-of-stock refused in 1 step; search-no-results and ZIP-bug still run to the step limit |
+| Generations | 4 | | 1 kept, 3 rolled back (slower, no success gain) |
+| LLM spend for 4 generations | $0.003 | | editor + fallbacks; Jev did the rest |
+| Jev decisions per goal | ~5 | | ~1.3 s of Jev time per goal |
+
+What the editor actually did (kept): added descriptions for the sign-in and orders tools ("requires authentication … will show 'Please sign in'"), raised the Jev threshold to 0.78. Rolled back: a search precondition + reworded instructions (slower), a required-option precondition on add (slower), another instruction rewrite (slower).
+
+Honest reading: on this shop the loop found speed, not success; the stuck goals need a longer multi-page recipe (sign in → orders → order) which only forms once a visit succeeds. That's the next step and we say so.
