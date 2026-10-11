@@ -169,8 +169,17 @@ async function loadActive(siteId, deps, opts = {}) {
   const found = await col.findOne({ siteId, active: true });
   if (found) return found;
   const seed = defaultConfig(siteId, opts);
-  const { insertedId } = await col.insertOne(seed);
-  return { ...seed, _id: insertedId };
+  try {
+    const { insertedId } = await col.insertOne(seed);
+    return { ...seed, _id: insertedId };
+  } catch (e) {
+    // Concurrent first visits race to seed v1; the unique (siteId, version) index lets exactly one win. Re-read.
+    if (e && (e.code === 11000 || /duplicate key/i.test(String(e.message)))) {
+      const again = await col.findOne({ siteId, active: true });
+      if (again) return again;
+    }
+    throw e;
+  }
 }
 
 /** Insert a config version. Returns the stored doc. */
