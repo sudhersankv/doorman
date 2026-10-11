@@ -15,7 +15,8 @@
     "goals": "node src/sim/goals.js",
     "bench": "node src/sim/run.js",
     "evolve": "node src/harness/evolve.js",
-    "verify:demo": "node src/sim/verify-demo.js"
+    "verify:demo": "node src/sim/verify-demo.js",
+    "compare": "node src/baseline/compare.js"
   },
   "dependencies": {
     "mongodb": "^6.17.0",
