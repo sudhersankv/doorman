@@ -15,6 +15,8 @@ function parseArgs(argv) {
     else if (a === '--generations' || a === '-g') out.generations = Number(argv[++i]);
     else if (a === '--max-ops') out.maxOps = Number(argv[++i]);
     else if (a === '--no-train') out.train = false;
+    else if (a === '--base') out.base = argv[++i];
+    else if (a === '--concurrency') out.concurrency = Number(argv[++i]);
     else if (a === '--help' || a === '-h') { console.log('usage: node src/harness/evolve.js --site <id> --generations <n> [--no-train] [--max-ops <n>]'); process.exit(0); }
   }
   return out;
@@ -36,7 +38,10 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const deps = await makeDeps(process.env);
   const { runSplit } = require('../sim/run'); // CONTRACTS §10: runSplit({ split, configVersion, deps }) -> metrics
-  const runGoals = (split, configVersion) => runSplit({ split, configVersion, deps });
+  const baseUrl = args.base || process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+  const concurrency = Number(args.concurrency || process.env.SIM_CONCURRENCY || 4);
+  const runGoals = (split, configVersion) => runSplit({ split, configVersion, deps, baseUrl, concurrency });
+  console.log(`evolve: site=${args.site} generations=${args.generations} base=${baseUrl} concurrency=${concurrency}`);
   const t0 = Date.now();
   try {
     const results = await evolve({
