@@ -33,7 +33,7 @@ async function pool(items, limit, fn) {
  * @param {{ split:'train'|'heldout'|'all', configVersion:number, deps:object, baseUrl:string, concurrency?:number, goals?:Array, limit?:number, browser?:object, maxSteps?:number }} args
  * @returns {Promise<object>} metrics (see metrics.js) plus runId
  */
-async function runSplit({ split = 'heldout', configVersion = null, deps, baseUrl, concurrency = 4, goals, limit, browser, maxSteps, onResult } = {}) {
+async function runSplit({ split = 'heldout', configVersion = null, deps, baseUrl, concurrency = 4, goals, limit, browser, maxSteps, onResult, noRecipes = false } = {}) {
   if (!baseUrl) throw new Error('runSplit: baseUrl required');
   const log = deps?.log || (() => {});
   let list = goals || (await loadGoals({ deps }));
@@ -46,14 +46,14 @@ async function runSplit({ split = 'heldout', configVersion = null, deps, baseUrl
   let results;
   try {
     results = await pool(list, concurrency, async (goal, i) => {
-      const r = await runGoal({ goal, baseUrl, browser, deps, maxSteps });
+      const r = await runGoal({ goal, baseUrl, browser, deps, maxSteps, configVersion, noRecipes });
       log('goal', { i: i + 1, of: list.length, id: goal.id, success: r.success, reason: r.reason, ms: r.ms, steps: r.steps });
       if (onResult) onResult(r, i);
       return r;
     });
   } finally { if (own) await browser.close().catch(() => {}); }
   const metrics = summarize(results);
-  const doc = { runId, siteId: SITE_ID, split, configVersion, startedAt, finishedAt: new Date().toISOString(), baseUrl, metrics, results };
+  const doc = { runId, siteId: SITE_ID, split, configVersion, noRecipes, startedAt, finishedAt: new Date().toISOString(), baseUrl, metrics, results };
   if (deps?.db) await deps.db.col('runs').insertOne(doc);
   return { ...metrics, runId, configVersion, split };
 }
@@ -63,7 +63,7 @@ async function runSplit({ split = 'heldout', configVersion = null, deps, baseUrl
  * @param {{ deps:object, baseUrl:string, concurrency?:number, limit?:number }} args
  */
 function makeRunGoals({ deps, baseUrl, concurrency = 4, limit } = {}) {
-  return (split, configVersion) => runSplit({ split, configVersion, deps, baseUrl, concurrency, limit });
+  return (split, configVersion, opts = {}) => runSplit({ split, configVersion, deps, baseUrl, concurrency, limit, ...opts });
 }
 
 function parseArgs(argv) {

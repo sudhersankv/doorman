@@ -54,6 +54,17 @@ function createServer({ deps, engine, config, recipes, visits, siteDefaults = {}
    * Active config for a site, cached `configCacheMs`. Only /api/decide seeds (it knows the page's action keys, which
    * seed guardrails.confirm); read-only routes return the stored config or an unsaved default.
    */
+  /** A specific stored version (benchmarking a candidate), cached separately from the active one. */
+  async function configFor(siteId, version, actionKeys = [], opts = {}) {
+    if (version == null) return activeConfig(siteId, actionKeys, opts);
+    const key = `${siteId}@${version}`;
+    const hit = configCache.get(key);
+    if (hit && Date.now() - hit.at < site.configCacheMs) return hit.value;
+    const value = await deps.db.col('harness_configs').findOne({ siteId, version: Number(version) });
+    if (!value) throw new HttpError(404, `config version ${version} not found for site ${siteId}`);
+    configCache.set(key, { at: Date.now(), value });
+    return value;
+  }
   async function activeConfig(siteId, actionKeys = [], { seed = false } = {}) {
     const hit = configCache.get(siteId);
     if (hit && Date.now() - hit.at < site.configCacheMs) return hit.value;
@@ -132,10 +143,12 @@ function createServer({ deps, engine, config, recipes, visits, siteDefaults = {}
       if (!engine || !engine.decide) throw new HttpError(503, 'engine not available');
       const visitId = body.visitId || crypto.randomUUID();
       if (!visitCache.has(visitId)) { sweepVisits(); visitCache.set(visitId, { startedAt: Date.now(), siteId }); }
-      const cfg = await activeConfig(siteId, (page.actions || []).map((a) => a.key), { seed: true });
+      const cfg = await configFor(siteId, body.configVersion, (page.actions || []).map((a) => a.key), { seed: true });
       const goalVector = await goalVectorFor(visitId, goal);
       const t0 = Date.now();
-      const out = await engine.decide({ goal, page, history, config: cfg, deps, goalVector, visitId, siteId });
+      // noRecipes: evaluate a configuration without learned memory (used for fair held-out comparisons)
+      const depsForVisit = body.noRecipes ? { ...deps, recipes: null } : deps;
+      const out = await engine.decide({ goal, page, history, config: cfg, deps: depsForVisit, goalVector, visitId, siteId });
       const step = out && out.step ? out.step : out;
       const trace = { ...(out && out.trace ? out.trace : {}), ...(step && step.trace ? step.trace : {}) };
       if (step && step.trace) delete step.trace;
@@ -156,7 +169,7 @@ function createServer({ deps, engine, config, recipes, visits, siteDefaults = {}
       if (!goal || typeof goal !== 'string') throw new HttpError(400, 'goal (string) required');
       if (!engine || !engine.verifyOutcome) throw new HttpError(503, 'engine not available');
       const cached = visitCache.get(visitId) || {};
-      const cfg = await activeConfig(siteId);
+      const cfg = await configFor(siteId, body.configVersion);
       const goalVector = cached.goalVector || (await goalVectorFor(visitId || crypto.randomUUID(), goal));
       let verdict = { satisfied: 0, failureReason: 'other' };
       try { verdict = (await engine.verifyOutcome({ goal, finalPage, history, deps, config: cfg })) || verdict; } catch (e) { log('verify-error', { error: e.message }); }

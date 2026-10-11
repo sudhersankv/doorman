@@ -13,7 +13,7 @@ const DEFAULT_TIMEOUT_MS = 60000;
 /**
  * @param {{ goal:object, baseUrl:string, browser:import('playwright').Browser, deps?:object, maxSteps?:number, timeoutMs?:number }} args
  */
-async function runGoal({ goal, baseUrl, browser, deps, maxSteps = 8, timeoutMs = DEFAULT_TIMEOUT_MS }) {
+async function runGoal({ goal, baseUrl, browser, deps, maxSteps = 8, timeoutMs = DEFAULT_TIMEOUT_MS, configVersion = null, noRecipes = false }) {
   const log = deps?.log || (() => {});
   const base = String(baseUrl).replace(/\/+$/, '');
   const context = await browser.newContext();
@@ -27,10 +27,10 @@ async function runGoal({ goal, baseUrl, browser, deps, maxSteps = 8, timeoutMs =
     await page.evaluate(() => { try { localStorage.clear(); } catch {} window.shopReset(); });
     // view_order goals start logged out on purpose (planted flaw C): the agent must find the footer sign-in.
     await page.waitForTimeout(100);
-    const run = page.evaluate(async ({ text, maxSteps }) => {
-      const r = await window.doorman.do(text, { autoConfirm: true, maxSteps });
+    const run = page.evaluate(async ({ text, maxSteps, configVersion, noRecipes }) => {
+      const r = await window.doorman.do(text, { autoConfirm: true, maxSteps, configVersion, noRecipes });
       return JSON.parse(JSON.stringify(r || {}));
-    }, { text: goal.text, maxSteps });
+    }, { text: goal.text, maxSteps, configVersion, noRecipes });
     let timer;
     const timeout = new Promise((_, rej) => { timer = setTimeout(() => rej(new Error(`goal timeout after ${timeoutMs} ms`)), timeoutMs); });
     try { result = { ...result, ...(await Promise.race([run, timeout])) }; } finally { clearTimeout(timer); }

@@ -40,7 +40,7 @@ async function main() {
   const { runSplit } = require('../sim/run'); // CONTRACTS §10: runSplit({ split, configVersion, deps }) -> metrics
   const baseUrl = args.base || process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
   const concurrency = Number(args.concurrency || process.env.SIM_CONCURRENCY || 4);
-  const runGoals = (split, configVersion) => runSplit({ split, configVersion, deps, baseUrl, concurrency });
+  const runGoals = (split, configVersion, opts = {}) => runSplit({ split, configVersion, deps, baseUrl, concurrency, ...opts });
   console.log(`evolve: site=${args.site} generations=${args.generations} base=${baseUrl} concurrency=${concurrency}`);
   const t0 = Date.now();
   try {

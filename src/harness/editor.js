@@ -171,7 +171,7 @@ async function evolveOnce({ siteId, deps, runGoals, keepRule = keepRuleDefault, 
   // accumulate between generations, so a stale "before" would not be comparable with the fresh "after".
   let before = opts.reuseBaseline && current.eval && current.eval.heldout ? current.eval.heldout : null;
   if (!before) {
-    before = pickMetrics(await runGoals('heldout', from));
+    before = pickMetrics(await runGoals('heldout', from, { noRecipes: true }));
     await cfg.setEval(siteId, from, { eval: { ...(current.eval || {}), heldout: before }, verdict: current.verdict ?? null }, deps);
   }
 
@@ -195,7 +195,7 @@ async function evolveOnce({ siteId, deps, runGoals, keepRule = keepRuleDefault, 
   const to = candidate.version;
   const evalDoc = {};
   if (trainFirst) evalDoc.train = pickMetrics(await runGoals('train', to));
-  const after = pickMetrics(await runGoals('heldout', to));
+  const after = pickMetrics(await runGoals('heldout', to, { noRecipes: true }));
   evalDoc.heldout = after;
 
   const keep = keepRule(before, after);

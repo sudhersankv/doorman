@@ -411,7 +411,7 @@
       let page = map();
       for (let i = 0; i < o.maxSteps; i++) {
         const tDecide = Date.now();
-        const res = await post(base + '/api/decide', { siteId, goal, page, history, visitId });
+        const res = await post(base + '/api/decide', { siteId, goal, page, history, visitId, ...(o.configVersion != null ? { configVersion: o.configVersion } : {}), ...(o.noRecipes ? { noRecipes: true } : {}) });
         const stepMs = Date.now() - tDecide;
         visitId = res.visitId || visitId;
         const step = res.step || {};
@@ -439,7 +439,7 @@
       const finalPage = page;
       let visit = null;
       try {
-        const v = await post(base + '/api/visit', { visitId, siteId, goal, history, finalPage, agentReported: { done, impossible } });
+        const v = await post(base + '/api/visit', { visitId, siteId, goal, history, finalPage, agentReported: { done, impossible }, ...(o.configVersion != null ? { configVersion: o.configVersion } : {}) });
         visit = v && v.visit || null;
       } catch (e) { failureReason = failureReason || 'visit_unreported'; }
       if (visit && visit.failureReason) failureReason = visit.failureReason;
