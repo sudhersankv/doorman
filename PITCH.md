@@ -41,18 +41,21 @@ goals it didn't see, and rollbacks are stored as evidence.
 **"Why MongoDB not Postgres?"** Nested per-site config, version chains, vectors next to data, one DB.
 **"Business?"** Free script, paid insight for owners; later a no-install agent-side version.
 
-## Numbers (final run, real Jev; held-out = 23 goals: 14 possible, 9 impossible; 40 train goals per generation)
-| Metric | v1 cold | v1 warm (recipes) | v4 active (kept) | note |
-|---|---|---|---|---|
-| Success on possible goals | 93% | 86–93% (run-to-run) | **93%** (from 86% same-conditions baseline) | +1 goal on held-out |
-| Median time per goal | 4.0 s | 2.4–4.9 s | **2.8 s** | recipes + edits; variance is mostly LLM latency |
-| Steps decided by the LLM | 30% | 32% | **28%** | the rest by Jev (~400 ms each) and recipes |
-| Recipe hits (held-out) | 0% | 13% | 17% | learned on train goals, reused on reworded held-out goals |
-| Impossible goals refused fast | 33% | 22% | 22% | out-of-stock refused in 1 step; search-no-results and the ZIP bug still run to the limit |
-| Generations | 3 | | 1 kept, 2 rolled back | both rollbacks stored with patch + metrics |
-| LLM spend, whole loop | $0.003 | | | editor + fallbacks |
+## Numbers (final run, corrected evaluation; real Jev; held-out = 23 goals: 14 possible, 9 impossible)
+| Metric | v1 seed (cold, with recipes off) | v1 warm (recipes on) | candidates v2–v4 |
+|---|---|---|---|
+| Success on possible goals | **93%** (13/14) | 86–93% run to run | 86% each → all rolled back |
+| Median time per goal | 3.0–4.0 s | **2.4–2.8 s** | 3.4–6.2 s |
+| Steps decided by the LLM | 28–29% | ~30% | 17% (v2, threshold 0.65) · 35% · 34% |
+| Impossible goals refused fast | 22% | 22% | 22–33% |
+| Recipe hits (held-out, warm) | — | 13–17% | — |
+| Generations | 3 | | 0 kept, 3 rolled back, $0.004 of LLM |
 
-**What the editor did (kept, v4):** rewrote the fast model's instructions, added `checkout` to the confirmation list (guardrail got stricter), added a rule to validate common form formats before submitting.
-**Rolled back:** raising the Jev threshold (more LLM steps, slower); a search-synonyms description + lower threshold (faster but one more failure).
+**What the editor proposed and why each was rejected on unseen goals:**
+- v2: tool descriptions + a ZIP precondition + Jev threshold 0.70→0.65. LLM steps fell 29%→17% (the candidate really ran), but one more goal failed. Rolled back.
+- v3: instruction rewrite + a no-repeat rule + `checkout` added to confirm. Same success, slower. Rolled back.
+- v4: search description/precondition + an address-validation rule. One more goal failed, much slower. Rolled back.
 
-**Three honest lines:** (1) simulated agents on our own mock shop; (2) the success gain is one held-out goal, the speed gain is recipes plus edits; (3) two planted flaws (no-results search, ZIP bug) still aren't refused fast; the editor can tune `impossibleThreshold` but didn't find it in three generations.
+**The bug we caught, and say out loud:** our first evolution runs "kept" versions by noise: candidates were stored inactive and the decision endpoint always loaded the active config, so every candidate was measured as the old one. A reviewer flagged it; we traced it, threaded the version end to end, added a regression test that two stored versions decide differently, disabled recipe memory during held-out comparisons so configs are compared on equal footing, and re-ran. The corrected loop rejected all three. We'd rather show a loop that says no correctly than one that says yes by accident.
+
+**Three honest lines:** simulated agents on our own shop · the seed config was already near the ceiling (13/14; the 14th is a multi-page sign-in flow) · two planted flaws (no-results search, ZIP bug) still aren't refused fast; `impossibleThreshold` is in the editor's reach but it didn't find it in three generations.

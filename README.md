@@ -68,17 +68,20 @@ runs unchanged on the second fixture site (a clinic booking page, `test/fixtures
 
 Traffic is simulated (Playwright agents) on a site we built. Real sites will score lower; the next step is real agent traffic.
 
-## Results (final run, real services, held-out goals)
+## Results (final run, corrected evaluation, real services, held-out goals)
 
-| | v1 cold | v4 active |
-|---|---|---|
-| Success on possible goals | 93% | 93% (from an 86% same-conditions baseline) |
-| Median time per goal | 4.0 s | 2.8 s |
-| Steps decided by the LLM | 30% | 28% (the rest by Jev and recipes) |
-| Generations | 3: 1 kept, 2 rolled back, $0.003 of LLM | |
+| | v1 seed | v1 warm (recipes) | editor candidates v2–v4 |
+|---|---|---|---|
+| Success on possible goals | 93% (13/14) | 86–93% | 86% each |
+| Median time per goal | 3.0–4.0 s | 2.4–2.8 s | 3.4–6.2 s |
+| Steps decided by the LLM | ~29% | ~30% | 17% / 35% / 34% |
+| Verdict | active | | all three rolled back, $0.004 of LLM |
 
-Kept edit (v4): rewrote the fast model's instructions, added `checkout` to the confirmation list, added a form-validation rule.
-Rolled back: raising the confidence threshold (slower), a search-synonyms description with a lower threshold (one more failure).
+Each candidate was executed for real (`configVersion` flows end to end; a regression test proves two stored versions decide
+differently) and compared on held-out goals with recipe memory off for both sides. None beat the seed on unseen goals, so none
+was kept. The gain that did hold is memory: recipes learned from visits cut median time by roughly a third on the same config.
+An earlier version of the loop measured candidates as the active config by mistake and "kept" versions by noise; the fix and the
+test are in `test/e2e/version-selection.test.js`.
 
 ## Run it
 
