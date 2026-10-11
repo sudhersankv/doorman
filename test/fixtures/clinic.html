@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maple Street Clinic</title>
+<style>
+  body{margin:0;font:15px/1.5 system-ui,sans-serif;background:#f4f7fb;color:#19232e}
+  header{display:flex;gap:14px;align-items:center;padding:12px 20px;background:#fff;border-bottom:1px solid #d9e1ea}
+  main{padding:20px;max-width:960px;margin:0 auto}
+  .filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .doctors{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .doctor{background:#fff;border:1px solid #d9e1ea;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:5px}
+  .doctor h2{margin:0;font-size:16px}.meta{font-size:13px;color:#5a6b7c}
+  button{padding:8px 14px;border:1px solid #1f5fa8;background:#1f5fa8;color:#fff;border-radius:6px;cursor:pointer}
+  .status{margin:10px 0;font-weight:600;color:#1f5fa8}.status.error{color:#b3261e}
+</style>
+</head>
+<body>
+<header>
+  <a href="#/" class="brand">Maple Street Clinic</a>
+  <nav><a href="#/about">About</a> · <a href="#/directions">Directions</a></nav>
+</header>
+<main>
+  <h1>Book an appointment</h1>
+  <div class="filters">
+    <label>Specialty <select id="specialty" aria-label="Specialty">
+      <option value="">Any</option><option value="family">Family medicine</option><option value="derm">Dermatology</option>
+      <option value="peds">Pediatrics</option><option value="ortho">Orthopedics</option>
+    </select></label>
+    <label>Date <input id="date" type="date" aria-label="Appointment date"></label>
+  </div>
+  <div id="status" class="status" role="status" aria-live="polite"></div>
+  <div class="doctors" id="doctors"></div>
+</main>
+<script>
+(function () {
+  var DOCTORS = [
+    { id: 'reyes', name: 'Dr. Ana Reyes', spec: 'family', specName: 'Family medicine', slot: '9:30 AM', fee: 120, rating: 4.7, years: 12 },
+    { id: 'okafor', name: 'Dr. Chidi Okafor', spec: 'derm', specName: 'Dermatology', slot: '11:00 AM', fee: 180, rating: 4.9, years: 8 },
+    { id: 'lind', name: 'Dr. Maja Lind', spec: 'peds', specName: 'Pediatrics', slot: '2:15 PM', fee: 95, rating: 4.5, years: 15 },
+    { id: 'tanaka', name: 'Dr. Ken Tanaka', spec: 'ortho', specName: 'Orthopedics', slot: '4:00 PM', fee: 210, rating: 4.2, years: 20 },
+    { id: 'haddad', name: 'Dr. Lina Haddad', spec: 'family', specName: 'Family medicine', slot: '8:00 AM', fee: 110, rating: 4.8, years: 6 }
+  ];
+  var BOOKED = [];
+  window.clinicState = function () { return { booked: BOOKED.slice() }; };
+  var grid = document.getElementById('doctors');
+  var status = document.getElementById('status');
+  function render() {
+    var spec = document.getElementById('specialty').value;
+    var list = DOCTORS.filter(function (d) { return !spec || d.spec === spec; });
+    grid.innerHTML = list.map(function (d) {
+      return '<article class="doctor" data-doctor="' + d.id + '">' +
+        '<h2>' + d.name + '</h2>' +
+        '<span class="meta">' + d.specName + ' · ' + d.years + ' yrs experience</span>' +
+        '<span class="meta">Next slot ' + d.slot + '</span>' +
+        '<span class="meta">$' + d.fee + ' visit · ' + d.rating + ' ★</span>' +
+        '<button type="button" data-testid="book-' + d.id + '" data-id="' + d.id + '">Book</button>' +
+        '</article>';
+    }).join('');
+    Array.prototype.forEach.call(grid.querySelectorAll('button[data-id]'), function (b) {
+      b.addEventListener('click', function () {
+        var date = document.getElementById('date').value;
+        if (!date) { status.className = 'status error'; status.textContent = 'Please choose a date first.'; return; }
+        var d = DOCTORS.filter(function (x) { return x.id === b.dataset.id; })[0];
+        BOOKED.push({ doctor: d.id, date: date, slot: d.slot });
+        status.className = 'status'; status.textContent = 'Booked ' + d.name + ' on ' + date + ' at ' + d.slot + '.';
+      });
+    });
+  }
+  document.getElementById('specialty').addEventListener('change', render);
+  render();
+})();
+</script>
+<script src="/doorman.js" data-site="clinic" defer></script>
+</body>
+</html>

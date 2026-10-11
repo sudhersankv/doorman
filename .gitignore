@@ -11,3 +11,5 @@ test-*.js
 test-*.bat
 run-sandbox-tests.bat
 setup-tonight.bat
+logs/
+data/goals.json

@@ -55,12 +55,16 @@ function makeFakeJev({ latencyMs = 0 } = {}) {
           const sorted = Object.values(probabilities).sort((a, b) => b - a);
           answers[id] = { choice: best, probabilities, confidence: Math.min(0.99, (sorted[0] || 0) - (sorted[1] || 0) + 0.5) };
         } else if (q.type === 'noul') {
+          // Generic vocabulary only. Feasibility/satisfaction look at page *messages* (alerts/status), not the whole state.
           const ins = (q.instructions || '').toLowerCase();
-          const txt = stateText.toLowerCase();
+          const msgs = (typeof state === 'object' && Array.isArray(state.messages) ? state.messages.map((m) => (typeof m === 'string' ? m : m.text || '')).join(' ') : '').toLowerCase();
+          const after = (typeof state === 'object' && Array.isArray(state.history) ? state.history.flatMap((h) => h.messagesAfter || []).join(' ') : '').toLowerCase();
+          const bad = /out of stock|unavailable|invalid|sign in|log in|not found|no results|no products|no items|error|not offered|adult sizes only/;
+          const good = /added|placed|thank you|confirmed|booked|success|status:|order #/;
           let p = 0.5;
-          if (/satisf|achiev|complete|done|success/.test(ins)) p = /added to cart|placed|thank you|status/.test(txt) ? 0.9 : /out of stock|invalid|sign in|not found|no products/.test(txt) ? 0.1 : 0.4;
-          else if (/possible|feasib|can this/.test(ins)) p = /out of stock|no products|not found|we carry adult/.test(txt) ? 0.15 : 0.85;
-          else if (/confirm|money|pay|order|purchase|submit/.test(ins)) p = /place order|checkout|pay/.test(txt) ? 0.8 : 0.1;
+          if (/satisf|achiev|complete|done|success/.test(ins)) p = good.test(msgs + ' ' + after) ? 0.9 : bad.test(msgs) ? 0.1 : 0.4;
+          else if (/possible|feasib|can this/.test(ins)) p = bad.test(msgs) ? 0.15 : 0.85;
+          else if (/confirm|irreversible|money|pay|order|purchase|submit/.test(ins)) p = /pay|place order|submit|book|checkout/.test(stateText.toLowerCase()) ? 0.7 : 0.1;
           answers[id] = { noul: p };
         } else if (q.type === 'score') {
           const n = (q.criteria || []).length || 2;
