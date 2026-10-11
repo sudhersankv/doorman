@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trailhead Outfitters</title>
+<link rel="stylesheet" href="style.css">
+<meta name="agent-tools" content="/.well-known/doorman.json">
+</head>
+<body>
+<header class="top">
+  <a href="#/" class="brand">Trailhead Outfitters</a>
+  <form id="search-form" role="search" class="search">
+    <input id="search" type="search" name="q" aria-label="Search products" placeholder="Search shoes, gear…">
+    <button type="submit">Search</button>
+  </form>
+  <a href="#/cart" id="cart-link">Cart (<span id="cart-count">0</span>)</a>
+</header>
+<main id="app" aria-live="polite"></main>
+<footer class="foot">
+  <span>© 2026 Trailhead Outfitters · Free returns within 30 days</span>
+  <!-- PLANTED FLAW C: the only link to log in is buried here in the footer -->
+  <a href="#/login" class="tiny">Member sign-in</a>
+</footer>
+<script src="shop.js"></script>
+<script src="/doorman.js" data-site="trailhead" defer onerror="void 0"></script>
+</body>
+</html>
