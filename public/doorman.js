@@ -410,7 +410,9 @@
     try {
       let page = map();
       for (let i = 0; i < o.maxSteps; i++) {
+        const tDecide = Date.now();
         const res = await post(base + '/api/decide', { siteId, goal, page, history, visitId });
+        const stepMs = Date.now() - tDecide;
         visitId = res.visitId || visitId;
         const step = res.step || {};
         if (step.tier) tierCounts[step.tier] = (tierCounts[step.tier] || 0) + 1;
@@ -424,10 +426,11 @@
           continue; // the next decide returns the confirmed action to execute
         }
         if (!step.action) { failureReason = 'other'; break; }
+        const tStep = Date.now();
         const rec = await act(step.action, step.params, { tier: step.tier, confidence: step.confidence });
         page = rec.page; delete rec.page;
         history.push(rec);
-        const detail = { index: i, step, record: rec, page };
+        const detail = { index: i, step, record: rec, page, ms: Date.now() - tStep + (stepMs || 0) };
         emit(detail);
         if (typeof o.onStep === 'function') { try { await o.onStep(detail); } catch {} }
       }
@@ -489,7 +492,39 @@
   const api = { version: VERSION, siteId, map, do: doGoal, tools, act, lastSnapshot: null };
   window.doorman = api;
 
-  const boot = () => { try { map(); registerTools(); } catch {} };
+  /* ------------------------------------------------------------------ */
+  /* Optional on-page HUD (data-hud on the script tag): a goal box + live step list. Demo aid, generic. */
+  /* ------------------------------------------------------------------ */
+  function mountHud() {
+    if (!scriptEl || !scriptEl.hasAttribute('data-hud') || document.getElementById('doorman-hud')) return;
+    const hud = document.createElement('div'); hud.id = 'doorman-hud'; hud.setAttribute('aria-live', 'off');
+    hud.innerHTML = '<style>#doorman-hud{position:fixed;right:12px;bottom:12px;width:min(380px,calc(100vw - 24px));z-index:2147483000;font:13px/1.4 system-ui,sans-serif;color:#e6e9ef;background:#171d28;border:1px solid #2a3242;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.35)}#doorman-hud *{box-sizing:border-box}#doorman-hud header{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #2a3242;font-weight:600}#doorman-hud header b{color:#d9a648}#doorman-hud form{display:flex;gap:6px;padding:8px 10px}#doorman-hud input{flex:1;padding:6px 8px;border:1px solid #2a3242;border-radius:6px;background:#11151d;color:#e6e9ef}#doorman-hud button{padding:6px 10px;border:0;border-radius:6px;background:#d9a648;color:#11151d;font-weight:600;cursor:pointer}#doorman-hud ol{list-style:none;margin:0;padding:4px 10px 8px;max-height:220px;overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:12px}#doorman-hud li{padding:2px 0;border-bottom:1px dashed #2a3242}#doorman-hud .t{color:#9aa4b6}#doorman-hud .ok{color:#5fbf86}#doorman-hud .bad{color:#e07070}#doorman-hud .tier{color:#d9a648}#doorman-hud footer{padding:6px 10px;color:#9aa4b6;font-size:12px}</style>' +
+      '<header><b>Doorman</b><span>site: ' + siteId + '</span></header>' +
+      '<form><input id="doorman-goal" placeholder="Goal for the visiting agent…" aria-label="Goal"><button type="submit">Go</button></form>' +
+      '<ol id="doorman-steps"></ol><footer id="doorman-foot">idle</footer>';
+    document.body.appendChild(hud);
+    const steps = hud.querySelector('#doorman-steps'), foot = hud.querySelector('#doorman-foot');
+    const line = (html, cls) => { const li = document.createElement('li'); if (cls) li.className = cls; li.innerHTML = html; steps.appendChild(li); steps.scrollTop = steps.scrollHeight; };
+    window.addEventListener('doorman:step', (e) => {
+      const d = e.detail || {}, st = d.step || {};
+      const tier = (st.tier || '').replace('T1_', '').replace('T2_', '').replace('T0_', '');
+      if (st.done) return line('<span class="ok">done</span> <span class="t">' + (st.reason || '') + '</span>');
+      if (st.impossible) return line('<span class="bad">not possible here</span> <span class="t">' + (st.reason || '') + '</span>');
+      if (st.needsConfirmation && !d.confirmed) return line('<span class="tier">confirm?</span> ' + st.action);
+      const p = st.params && Object.keys(st.params).length ? ' ' + JSON.stringify(st.params) : '';
+      line((d.index + 1) + '. <b>' + (st.action || '—') + '</b>' + p + ' <span class="tier">' + tier + '</span> <span class="t">' + (typeof st.confidence === 'number' ? st.confidence.toFixed(2) : '') + (d.ms ? ' · ' + d.ms + ' ms' : '') + '</span>' + (d.record && d.record.outcome === 'error' ? ' <span class="bad">error</span>' : ''));
+    });
+    hud.querySelector('form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const goal = hud.querySelector('#doorman-goal').value.trim(); if (!goal) return;
+      steps.innerHTML = ''; foot.textContent = 'running…'; const t0 = Date.now();
+      const r = await doGoal(goal, { autoConfirm: true });
+      const tc = r.tierCounts || {};
+      foot.textContent = (r.done ? 'done' : r.impossible ? 'not possible on this site' : r.needsConfirmation ? 'waiting for confirmation' : 'stopped') + ' · ' + (Date.now() - t0) + ' ms · ' + (r.steps ? r.steps.length : 0) + ' steps · Jev ' + ((tc.T1_jev || 0) + (tc.T1_recipe || 0)) + ' · LLM ' + (tc.T2_llm || 0) + (r.failureReason ? ' · ' + r.failureReason : '');
+    });
+  }
+
+  const boot = () => { try { map(); registerTools(); mountHud(); } catch {} };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   window.addEventListener('hashchange', () => settle(false).then(registerTools));
 })();
