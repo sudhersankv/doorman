@@ -2,91 +2,324 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Doorman — how this harness evolved</title>
+<title>Doorman — harness evolution</title>
+<meta name="description" content="How this site's agent harness evolved: every version, the patch proposed, the held-out benchmark before and after, and the verdict.">
 <style>
-:root{--bg:#f6f7f9;--fg:#1b2230;--muted:#5b6577;--line:#dfe3ea;--card:#fff;--accent:#a8741a;--ok:#2f7d4f;--bad:#b3261e;--mono:ui-monospace,Consolas,monospace}
-@media (prefers-color-scheme:dark){:root{--bg:#11151d;--fg:#e6e9ef;--muted:#9aa4b6;--line:#2a3242;--card:#171d28;--accent:#d9a648;--ok:#5fbf86;--bad:#e07070}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,Segoe UI,sans-serif}
-.wrap{max-width:980px;margin:0 auto;padding:24px 16px 60px}h1{font-size:1.6rem;margin:0 0 4px}h2{font-size:1.1rem;margin:28px 0 8px}.muted{color:var(--muted)}
-.row{display:flex;gap:12px;flex-wrap:wrap}.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:150px;flex:1}
-.tile b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums}.tile span{font-size:.8rem;color:var(--muted)}
-table{border-collapse:collapse;width:100%;font-size:.9rem;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.ver{display:grid;grid-template-columns:70px 1fr;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0}
-.vnum{font-family:var(--mono);font-weight:700}.kept{color:var(--ok);font-weight:700}.rolled_back{color:var(--bad);font-weight:700}.no_patch{color:var(--muted)}
-code{font-family:var(--mono);font-size:.85em;background:rgba(127,127,127,.12);padding:1px 5px;border-radius:4px}
-.patch{font-family:var(--mono);font-size:.8rem;white-space:pre-wrap;margin:6px 0 0}
-svg{width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
-.note{border-left:3px solid var(--accent);padding:4px 12px;margin:10px 0}
+:root{
+  --bg:#edf0f3;--surface:#ffffff;--surface-2:#f6f8fa;--ink:#1a2130;--muted:#5f6a7a;--faint:#8b95a5;--line:#d4dae2;--line-strong:#b9c2cd;
+  --brass:#9a6b12;--brass-ink:#7a5407;--brass-bg:#f4ead3;--red:#a8413a;--red-bg:#f6e2df;--slate:#4a5a70;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0e1218;--surface:#161c25;--surface-2:#1c232e;--ink:#e3e7ed;--muted:#8f9aaa;--faint:#6b7686;--line:#283140;--line-strong:#394459;
+  --brass:#d9aa4f;--brass-ink:#e8c37a;--brass-bg:#2b2412;--red:#e27d73;--red-bg:#3a1f1d;--slate:#9fb0c8;
+}}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 16px 72px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding-bottom:18px;border-bottom:1px solid var(--line-strong)}
+header.top h1{font-size:1.75rem;line-height:1.15;font-weight:650;letter-spacing:-.015em;margin:0}
+header.top p{margin:6px 0 0;color:var(--muted);max-width:60ch}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px 6px 8px;background:var(--surface);font-size:.9rem;white-space:nowrap}
+.badge[hidden]{display:none}
+.badge .site{font-family:var(--mono);font-size:.85rem;color:var(--muted)}
+.badge .v{font-family:var(--mono);font-weight:700;color:var(--brass-ink);background:var(--brass-bg);border-radius:999px;padding:1px 9px}
+.badge .dot{width:8px;height:8px;border-radius:50%;background:var(--brass);box-shadow:0 0 0 3px var(--brass-bg)}
+nav.pages{font-size:.85rem;color:var(--muted);margin-top:10px}
+nav.pages a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line-strong)}
+nav.pages a[aria-current]{color:var(--ink);border-color:var(--ink)}
+nav.pages span{margin:0 8px;color:var(--faint)}
+section{margin-top:36px}
+h2{font-size:1.1rem;font-weight:650;letter-spacing:-.01em;margin:0 0 4px}
+.lede{margin:0 0 14px;color:var(--muted);font-size:.9rem}
+.muted{color:var(--muted)}.mono{font-family:var(--mono)}.num{font-variant-numeric:tabular-nums}
+/* timeline */
+.chain{display:flex;align-items:flex-start;overflow-x:auto;padding:14px 4px 8px;gap:0;scrollbar-width:thin}
+.node{display:flex;flex-direction:column;align-items:center;min-width:92px;position:relative;text-decoration:none;color:inherit}
+.node .disc{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:700 .85rem var(--mono);border:2px solid var(--line-strong);background:var(--surface);color:var(--ink);position:relative;z-index:1}
+.node.kept .disc{border-color:var(--brass);color:var(--brass-ink)}
+.node.rolled_back .disc{border-color:var(--red);color:var(--red);border-style:dashed}
+.node.active .disc{background:var(--brass);border-color:var(--brass);color:#fff;box-shadow:0 0 0 4px var(--brass-bg)}
+.node small{margin-top:7px;font-size:.74rem;color:var(--muted);text-align:center;line-height:1.25;max-width:92px}
+.node.active small{color:var(--brass-ink);font-weight:600}
+.node.rolled_back small{color:var(--red)}
+.link{flex:0 0 36px;height:2px;background:var(--line-strong);margin-top:18px}
+.link.rolled_back{background:repeating-linear-gradient(90deg,var(--red) 0 5px,transparent 5px 9px);opacity:.75}
+/* chart */
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 12px 6px}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:.8rem;color:var(--muted);padding:4px 6px 4px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+/* config summary */
+.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cfg > div{background:var(--surface);padding:14px 16px}
+.cfg dt{font-size:.78rem;color:var(--muted);margin:0 0 4px}
+.cfg dd{margin:0;font-size:1rem}
+.cfg dd b{font-size:1.4rem;font-weight:650;letter-spacing:-.01em}
+.cfg ul{margin:4px 0 0;padding:0;list-style:none;font-size:.88rem}
+.cfg li{padding:5px 0;border-top:1px solid var(--line)}
+.cfg li:first-child{border-top:0;padding-top:0}
+.cfg .kv{display:flex;justify-content:space-between;gap:10px;font-size:.9rem;padding:3px 0}
+.cfg .kv span:last-child{font-family:var(--mono);font-size:.84rem;white-space:nowrap;flex:0 0 auto}
+.pill{display:inline-block;font-family:var(--mono);font-size:.78rem;padding:1px 7px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line);margin:2px 4px 2px 0}
+/* version cards */
+.ver{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin:14px 0;overflow:hidden}
+.ver.active{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass)}
+.ver.rolled_back{border-style:dashed}
+.ver .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.ver .head .id{font:700 1.15rem var(--mono);letter-spacing:-.01em}
+.state{font-size:.76rem;font-weight:650;padding:2px 9px;border-radius:999px;border:1px solid transparent;letter-spacing:.01em}
+.state.kept{color:var(--brass-ink);background:var(--brass-bg);border-color:var(--brass)}
+.state.active{color:#fff;background:var(--brass)}
+.state.rolled_back{color:var(--red);background:var(--red-bg);border-color:var(--red)}
+.state.no_patch,.state.seed,.state.pending{color:var(--muted);background:var(--surface);border-color:var(--line-strong)}
+.ver .head .who{color:var(--muted);font-size:.9rem}
+.ver .head time{margin-left:auto;color:var(--faint);font-size:.82rem}
+.ver .body{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:0}
+.ver .body > div{padding:16px 18px;min-width:0}
+.ver .body > div + div{border-left:1px solid var(--line)}
+@media (max-width:760px){.ver .body{grid-template-columns:1fr}.ver .body > div + div{border-left:0;border-top:1px solid var(--line)}}
+.ver h3{font-size:.8rem;font-weight:600;color:var(--muted);margin:0 0 8px}
+.ver h3 + *{margin-top:0}
+.rationale{margin:0 0 16px;font-size:.95rem;line-height:1.55}
+.ops{list-style:none;margin:0;padding:0;font-size:.86rem}
+.ops li{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:8px 0;border-top:1px solid var(--line)}
+.ops li:first-child{border-top:0;padding-top:0}
+.op{font-family:var(--mono);font-size:.72rem;font-weight:700;padding:1px 6px;border-radius:4px;border:1px solid var(--line-strong);color:var(--muted);height:fit-content;margin-top:2px}
+.op.remove{color:var(--red);border-color:var(--red)}
+.op.add{color:var(--brass-ink);border-color:var(--brass)}
+.ops .path{font-family:var(--mono);font-size:.84rem;word-break:break-all}
+.ops .val{grid-column:2;color:var(--ink);font-size:.86rem;line-height:1.5;word-break:break-word}
+.ops .val code{font-family:var(--mono);font-size:.84em;background:var(--surface-2);border:1px solid var(--line);padding:1px 5px;border-radius:4px}
+.ops .val .q{quotes:"\201C" "\201D"}
+.ops .val .q::before{content:open-quote;color:var(--faint)}.ops .val .q::after{content:close-quote;color:var(--faint)}
+table.bench{width:100%;border-collapse:collapse;font-size:.88rem}
+table.bench th{font-weight:600;color:var(--muted);font-size:.76rem;text-align:right;padding:0 0 6px;border-bottom:1px solid var(--line)}
+table.bench th:first-child{text-align:left}
+table.bench td{padding:7px 0 7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.bench td:first-child{text-align:left;color:var(--muted);white-space:normal;padding-left:0}
+table.bench tr:last-child td{border-bottom:0}
+table.bench td.after{font-weight:650}
+.d{font-size:.82rem;font-weight:650}.d.up{color:var(--brass-ink)}.d.down{color:var(--red)}.d.flat{color:var(--faint)}
+.verdict{margin:14px 0 0;padding:10px 12px;border-radius:8px;font-size:.88rem;line-height:1.5;background:var(--surface-2);border-left:3px solid var(--line-strong)}
+.verdict.kept{border-left-color:var(--brass);background:var(--brass-bg)}
+.verdict.rolled_back{border-left-color:var(--red);background:var(--red-bg)}
+.verdict b{font-weight:650}
+.foot{padding:10px 18px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+/* runs */
+.tbl{width:100%;border-collapse:collapse;font-size:.86rem;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tbl th,.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl th{font-size:.74rem;font-weight:600;color:var(--muted)}
+.tbl tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:12px;padding:28px 20px;text-align:center;color:var(--muted);max-width:60ch;margin:24px auto}
+.empty b{display:block;color:var(--ink);font-size:1.05rem;margin-bottom:6px}
+.empty code{font-family:var(--mono);background:var(--surface-2);padding:1px 6px;border-radius:4px;border:1px solid var(--line)}
+.keep-rule{font-size:.82rem;color:var(--muted);margin:10px 0 0;line-height:1.55}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){.node .disc{transition:transform .15s}.node:hover .disc{transform:translateY(-2px)}}
 </style>
 </head>
-<body><div class="wrap">
-<h1>How this harness evolved</h1>
-<p class="muted" id="sub">Loading…</p>
-<div class="row" id="tiles"></div>
-<h2>Success on possible goals, per version (held-out)</h2>
-<div id="chart"></div>
-<h2>Versions</h2>
-<div id="versions"></div>
-<p class="note">Each version is a document in MongoDB Atlas with a parent link, the patch the editor proposed, the held-out metrics before and after, and the verdict. Rolled-back versions are kept as evidence.</p>
-<h2>Benchmark runs</h2>
-<div id="runs"></div>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Harness evolution</h1>
+      <p id="sub">Loading versions…</p>
+      <nav class="pages" aria-label="Pages"><a href="/evolution/" aria-current="page">Evolution</a><span>/</span><a id="dash-link" href="/dashboard/">Traffic dashboard</a><span>/</span><a id="shop-link" href="/shop/">Site</a></nav>
+    </div>
+    <div class="badge" id="badge" hidden><span class="dot" aria-hidden="true"></span><span class="site" id="badge-site"></span><span>active</span><span class="v" id="badge-v"></span></div>
+  </header>
+  <div id="content"></div>
 </div>
 <script>
+'use strict';
 const site = new URLSearchParams(location.search).get('site') || 'trailhead';
 const $ = (s) => document.querySelector(s);
-const pct = (x) => x == null ? '—' : (Math.round(x * 1000) / 10) + '%';
-const ms = (x) => x == null ? '—' : Math.round(x) + ' ms';
-function metricsOf(v) { return (v.eval && (v.eval.after || v.eval.heldout)) || null; }
-(async () => {
-  const [evo, runs] = await Promise.all([
-    fetch(`/api/evolution?site=${site}`).then((r) => r.json()).catch(() => null),
-    fetch(`/api/runs?site=${site}`).then((r) => r.json()).catch(() => null),
-  ]);
-  const versions = (evo && (evo.versions || evo)) || [];
-  if (!Array.isArray(versions) || !versions.length) { $('#sub').textContent = 'No harness versions yet for site "' + site + '". Run the pipeline first.'; return; }
-  const active = versions.find((v) => v.active) || versions[versions.length - 1];
-  const first = versions[0], fm = metricsOf(first), am = metricsOf(active);
-  $('#sub').textContent = `Site "${site}" · ${versions.length} version${versions.length > 1 ? 's' : ''} · active v${active.version} · ${versions.filter((v) => v.verdict === 'kept').length} kept, ${versions.filter((v) => v.verdict === 'rolled_back').length} rolled back`;
-  const tiles = [
-    ['Success on possible goals', `${pct(fm && fm.successPossible)} → ${pct(am && am.successPossible)}`, 'v1 → active, held-out'],
-    ['Impossible goals answered "no"', `${pct(fm && fm.impossibleHandled)} → ${pct(am && am.impossibleHandled)}`, 'fast, correct refusals'],
-    ['Median time per goal', `${ms(fm && fm.medianMs)} → ${ms(am && am.medianMs)}`, 'includes page actions'],
-    ['Steps needing the LLM', `${pct(fm && fm.llmFallbackRate)} → ${pct(am && am.llmFallbackRate)}`, 'rest decided by Jev / recipes'],
-    ['Recipe hits (held-out)', `${pct(fm && fm.recipeHitRate)} → ${pct(am && am.recipeHitRate)}`, 'learned step sequences reused'],
-  ];
-  $('#tiles').innerHTML = tiles.map(([l, v, s]) => `<div class="tile"><span>${l}</span><b style="font-size:1.1rem">${v}</b><span>${s}</span></div>`).join('');
-  // chart
-  const pts = versions.map((v) => ({ x: v.version, y: (metricsOf(v) || {}).successPossible, verdict: v.verdict, active: v.active })).filter((p) => p.y != null);
-  if (pts.length) {
-    const W = 900, H = 260, L = 50, R = 20, T = 20, B = 40;
-    const xs = (x) => L + (pts.length === 1 ? (W - L - R) / 2 : (x - pts[0].x) / (pts[pts.length - 1].x - pts[0].x || 1) * (W - L - R));
-    const ys = (y) => T + (1 - y) * (H - T - B);
-    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="success on possible goals by version">`;
-    for (const g of [0, .25, .5, .75, 1]) s += `<line x1="${L}" x2="${W - R}" y1="${ys(g)}" y2="${ys(g)}" stroke="var(--line)"/><text x="${L - 8}" y="${ys(g) + 4}" font-size="11" text-anchor="end" fill="var(--muted)">${g * 100}%</text>`;
-    s += `<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${pts.map((p) => `${xs(p.x)},${ys(p.y)}`).join(' ')}"/>`;
-    for (const p of pts) s += `<circle cx="${xs(p.x)}" cy="${ys(p.y)}" r="${p.active ? 7 : 5}" fill="${p.verdict === 'rolled_back' ? 'var(--bad)' : 'var(--accent)'}"/><text x="${xs(p.x)}" y="${H - 14}" font-size="12" text-anchor="middle" fill="var(--muted)">v${p.x}${p.active ? ' (active)' : ''}${p.verdict === 'rolled_back' ? ' rolled back' : ''}</text>`;
-    s += '</svg>';
-    $('#chart').innerHTML = s;
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pct = (x, d = 1) => (x == null || Number.isNaN(x) ? '—' : (Math.round(x * 100 * 10 ** d) / 10 ** d).toFixed(d) + '%');
+const pts = (x) => (x == null ? '—' : (x >= 0 ? '+' : '−') + Math.abs(Math.round(x * 1000) / 10).toFixed(1) + ' pts');
+const msf = (x) => (x == null || Number.isNaN(x) ? '—' : Math.round(x).toLocaleString('en-US') + ' ms');
+const when = (iso) => (iso ? new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
+const heldout = (v) => (v.eval && (v.eval.after || v.eval.heldout)) || null;
+const stateOf = (v) => (v.active ? 'active' : v.verdict || (v.createdBy === 'seed' ? 'seed' : 'pending'));
+const stateLabel = { active: 'active', kept: 'kept', rolled_back: 'rolled back', no_patch: 'no patch', seed: 'seed', pending: 'not evaluated' };
+for (const a of ['dash-link', 'shop-link']) if (site !== 'trailhead') $('#' + a).href += '?site=' + encodeURIComponent(site);
+
+// Keep rule (CONTRACTS.md §9): success +2 pts, or ≥10% faster with success within −2 pts.
+function explainVerdict(before, after, verdict) {
+  if (!before || !after) return null;
+  const dS = after.successPossible - before.successPossible;
+  const speed = before.medianMs ? 1 - after.medianMs / before.medianMs : 0;
+  const fast = speed >= 0.1, hold = dS >= -0.02, gain = dS > 0.02;
+  const sp = (speed >= 0 ? Math.round(speed * 100) + '% faster' : Math.round(-speed * 100) + '% slower');
+  if (verdict === 'kept') {
+    if (gain) return `Kept — success on possible goals moved ${pts(dS)} on held-out, above the +2 pt bar.`;
+    if (hold && fast) return `Kept — success held within −2 pts (${pts(dS)}) and the median visit got ${sp}, past the 10% bar.`;
+    return `Kept — success ${pts(dS)}, median ${sp}.`;
   }
-  // versions
-  $('#versions').innerHTML = versions.map((v) => {
-    const m = metricsOf(v), before = v.eval && v.eval.before;
-    const patch = (v.patch || []).map((op) => `${op.op} ${op.path}${op.value !== undefined ? ' = ' + JSON.stringify(op.value) : ''}`).join('\n');
-    return `<div class="ver"><div class="vnum">v${v.version}${v.active ? '<br><span class="kept">active</span>' : ''}</div><div>
-      <div><b>${v.createdBy === 'editor' ? 'Proposed by the editor' : 'Seed configuration'}</b>${v.parent != null ? ` · parent v${v.parent}` : ''}${v.verdict ? ` · <span class="${v.verdict}">${v.verdict.replace('_', ' ')}</span>` : ''}</div>
-      ${v.rationale ? `<div class="muted">${v.rationale}</div>` : ''}
-      ${patch ? `<div class="patch">${patch}</div>` : ''}
-      ${v.rules && v.rules.length ? `<div>Rules: ${v.rules.map((r) => `<code>${r}</code>`).join(' ')}</div>` : ''}
-      ${m ? `<div class="muted">held-out: success on possible ${pct(m.successPossible)}${before ? ` (was ${pct(before.successPossible)})` : ''} · impossible handled ${pct(m.impossibleHandled)} · median ${ms(m.medianMs)} · LLM steps ${pct(m.llmFallbackRate)}</div>` : ''}
-      ${v.metrics && v.metrics.n ? `<div class="muted">${v.metrics.n} visits logged on this version</div>` : ''}
-    </div></div>`;
-  }).join('');
-  // runs
-  const rs = (runs && (runs.runs || runs)) || [];
-  if (Array.isArray(rs) && rs.length) {
-    $('#runs').innerHTML = `<table><tr><th>When</th><th>Split</th><th>Config</th><th>Goals</th><th>Success (possible)</th><th>Impossible handled</th><th>Median</th><th>LLM steps</th></tr>${rs.slice().reverse().map((r) => { const m = r.metrics || {}; return `<tr><td>${(r.finishedAt || r.startedAt || '').replace('T', ' ').slice(0, 19)}</td><td>${r.split}</td><td>v${r.configVersion}</td><td>${m.n ?? ''}</td><td>${pct(m.successPossible)}</td><td>${pct(m.impossibleHandled)}</td><td>${ms(m.medianMs)}</td><td>${pct(m.llmFallbackRate)}</td></tr>`; }).join('')}</table>`;
-  } else $('#runs').innerHTML = '<p class="muted">No benchmark runs yet.</p>';
+  if (verdict === 'rolled_back') {
+    if (!hold) return `Rolled back — success fell ${pts(dS)} on held-out, past the −2 pt floor, and the median visit got ${sp}. The parent stays active; this version is kept as evidence.`;
+    return `Rolled back — success ${pts(dS)} (needs more than +2 pts) and the median visit got ${sp} (needs ≥10% faster). The parent stays active; this version is kept as evidence.`;
+  }
+  return null;
+}
+
+function renderMutation(op) {
+  const path = String(op.path || '');
+  let val = '';
+  if (op.op === 'remove') val = '<span class="muted">removed</span>';
+  else if (typeof op.value === 'string') val = `<span class="q">${esc(op.value)}</span>`;
+  else if (typeof op.value === 'boolean' || typeof op.value === 'number') val = `<code>${esc(String(op.value))}</code>`;
+  else if (op.value !== undefined) val = `<code>${esc(JSON.stringify(op.value))}</code>`;
+  const nice = path.replace(/^\/rules\/-$/, '/rules (append)').replace(/^\/guardrails\/confirm\/-$/, '/guardrails/confirm (append)');
+  return `<li><span class="op ${esc(op.op)}">${esc(op.op)}</span><span class="path">${esc(nice)}</span><span class="val">${val}</span></li>`;
+}
+
+function benchTable(before, after) {
+  const rows = [
+    ['Success on possible goals', 'successPossible', pct, true],
+    ['Impossible goals handled', 'impossibleHandled', pct, true],
+    ['Median visit', 'medianMs', msf, false],
+    ['Steps decided by the LLM', 'llmFallbackRate', pct, false],
+    ['Goals using a recipe', 'recipeHitRate', pct, true],
+  ];
+  const delta = (k, fmt, higherIsBetter) => {
+    if (!before || before[k] == null || after[k] == null) return '<span class="d flat">—</span>';
+    const d = after[k] - before[k];
+    if (Math.abs(d) < 1e-9) return '<span class="d flat">±0</span>';
+    const good = higherIsBetter ? d > 0 : d < 0;
+    const txt = fmt === pct ? pts(d) : (d > 0 ? '+' : '−') + msf(Math.abs(d));
+    return `<span class="d ${good ? 'up' : 'down'}">${txt}</span>`;
+  };
+  return `<table class="bench"><thead><tr><th>Held-out benchmark</th><th>${before ? 'before' : ''}</th><th>${before ? 'after' : 'measured'}</th><th>${before ? 'Δ' : ''}</th></tr></thead><tbody>${rows.map(([l, k, fmt, hib]) =>
+    `<tr><td>${l}</td><td>${before ? fmt(before[k]) : ''}</td><td class="after">${fmt(after[k])}</td><td>${before ? delta(k, fmt, hib) : ''}</td></tr>`).join('')}</tbody></table>`;
+}
+
+function chart(versions, W = 1040) {
+  const data = versions.map((v) => ({ v: v.version, m: heldout(v), state: stateOf(v) })).filter((d) => d.m && d.m.successPossible != null);
+  if (!data.length) return '<p class="lede">No held-out benchmark on any version yet.</p>';
+  const narrow = W < 600; const H = narrow ? 240 : 280, L = narrow ? 40 : 54, R = narrow ? 58 : 70, T = 18, B = 42, iw = W - L - R, ih = H - T - B;
+  const maxMs = Math.max(1, ...data.map((d) => d.m.medianMs || 0));
+  const msTop = Math.ceil(maxMs / 500) * 500 || 500;
+  const x = (i) => L + (data.length === 1 ? iw / 2 : (i / (data.length - 1)) * iw);
+  const yS = (s) => T + (1 - s) * ih, yM = (m) => T + (1 - m / msTop) * ih;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Success on possible goals and median visit time per version">`;
+  for (const g of [0, .25, .5, .75, 1]) s += `<line x1="${L}" x2="${W - R}" y1="${yS(g)}" y2="${yS(g)}" stroke="var(--line)"/><text x="${L - 10}" y="${yS(g) + 4}" font-size="11" text-anchor="end" fill="var(--muted)">${g * 100}%</text>`;
+  for (const f of [0, .5, 1]) s += `<text x="${W - R + 10}" y="${yM(f * msTop) + 4}" font-size="11" fill="var(--muted)">${(f * msTop).toLocaleString('en-US')} ms</text>`;
+  s += `<polyline fill="none" stroke="var(--slate)" stroke-width="2" stroke-dasharray="5 4" points="${data.map((d, i) => `${x(i)},${yM(d.m.medianMs || 0)}`).join(' ')}"/>`;
+  s += `<polyline fill="none" stroke="var(--brass)" stroke-width="2.5" points="${data.map((d, i) => `${x(i)},${yS(d.m.successPossible)}`).join(' ')}"/>`;
+  data.forEach((d, i) => {
+    const rb = d.state === 'rolled_back';
+    s += `<circle cx="${x(i)}" cy="${yM(d.m.medianMs || 0)}" r="4" fill="var(--surface)" stroke="var(--slate)" stroke-width="2"/>`;
+    s += `<circle cx="${x(i)}" cy="${yS(d.m.successPossible)}" r="${d.state === 'active' ? 7 : 5}" fill="${rb ? 'var(--red)' : 'var(--brass)'}" ${d.state === 'active' ? 'stroke="var(--brass-bg)" stroke-width="3"' : ''}/>`;
+    const ym = yM(d.m.medianMs || 0), ys = yS(d.m.successPossible), below = ym < ys && ys - ym < 26;
+    const anchor = data.length > 1 && i === 0 ? 'start' : data.length > 1 && i === data.length - 1 ? 'end' : 'middle', dx = anchor === 'start' ? 9 : anchor === 'end' ? -9 : 0;
+    s += `<text x="${x(i) + dx}" y="${below ? ys + 20 : ys - 12}" font-size="11" text-anchor="${anchor}" fill="${rb ? 'var(--red)' : 'var(--ink)'}" font-weight="600">${pct(d.m.successPossible, 0)}</text>`;
+    s += `<text x="${x(i)}" y="${H - 16}" font-size="12" text-anchor="middle" fill="${d.state === 'active' ? 'var(--brass-ink)' : rb ? 'var(--red)' : 'var(--muted)'}" font-family="var(--mono)" font-weight="${d.state === 'active' ? 700 : 500}">v${d.v}${d.state === 'active' ? ' ●' : ''}</text>`;
+  });
+  s += '</svg>';
+  return `<div class="chart">${s}<div class="legend"><span><i style="background:var(--brass)"></i>success on possible goals (held-out)</span><span><i style="background:var(--slate);height:2px"></i>median ms per visit (right axis)</span><span><i style="background:var(--red);width:8px;height:8px;border-radius:50%"></i>rolled back</span></div></div>`;
+}
+
+function configSummary(cfg) {
+  if (!cfg) return '';
+  const tools = Object.entries(cfg.tools || {});
+  const hidden = tools.filter(([, t]) => t.exposed === false).length, described = tools.filter(([, t]) => t.description).length;
+  const g = cfg.guardrails || {}, j = cfg.jev || {}, c = cfg.context || {};
+  return `<div class="cfg">
+    <div><dt>Tools touched by the harness</dt><dd><b>${tools.length}</b> <span class="muted">${tools.length ? `· ${hidden} hidden · ${described} described` : '· every page action exposed as-is'}</span></dd>
+      ${tools.length ? `<ul>${tools.slice(0, 8).map(([k, t]) => `<li><span class="mono">${esc(k)}</span>${t.exposed === false ? ' <span class="state rolled_back">hidden</span>' : ''}${t.description ? `<div class="muted" style="font-size:.84rem">${esc(t.description)}</div>` : ''}${t.precondition ? `<div class="muted" style="font-size:.84rem">if: ${esc(t.precondition)}</div>` : ''}</li>`).join('')}${tools.length > 8 ? `<li class="muted">+${tools.length - 8} more</li>` : ''}</ul>` : ''}</div>
+    <div><dt>Rules injected into Jev's context</dt><dd><b>${(cfg.rules || []).length}</b></dd>
+      ${(cfg.rules || []).length ? `<ul>${cfg.rules.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : '<div class="muted" style="font-size:.88rem">none yet — the editor adds rules when visits fail for a reason a sentence can fix</div>'}</div>
+    <div><dt>Actions that need confirmation</dt><dd><b>${(g.confirm || []).length}</b></dd>
+      <div style="margin-top:6px">${(g.confirm || []).length ? g.confirm.map((k) => `<span class="pill">${esc(k)}</span>`).join('') : '<span class="muted" style="font-size:.88rem">none seeded</span>'}</div></div>
+    <div><dt>Thresholds</dt>
+      <div class="kv"><span>Jev confidence before LLM fallback</span><span>${esc(j.confidenceThreshold)}</span></div>
+      <div class="kv"><span>Impossible-goal threshold</span><span>${esc(g.impossibleThreshold)}</span></div>
+      <div class="kv"><span>Max steps per visit</span><span>${esc(g.maxSteps)}</span></div>
+      <div class="kv"><span>Items / history / recipes in context</span><span>${esc(c.maxItems)} / ${esc(c.historySteps)} / ${esc(c.recipesTopK)}</span></div>
+      ${c.recipeMinScore != null ? `<div class="kv"><span>Recipe match score</span><span>${esc(c.recipeMinScore)}</span></div>` : ''}</div>
+  </div>`;
+}
+
+function versionCard(v, byVersion) {
+  const state = stateOf(v), after = heldout(v), before = v.eval && v.eval.before;
+  const ops = Array.isArray(v.patch) ? v.patch : [];
+  const why = explainVerdict(before, after, v.verdict);
+  const who = v.createdBy === 'seed' ? 'Seed configuration — every page action exposed, no rules' : `Proposed by the editor${v.parent != null ? ` from v${v.parent}` : ''}`;
+  const train = v.eval && v.eval.train;
+  return `<article class="ver ${state}" id="v${v.version}">
+    <div class="head"><span class="id">v${v.version}</span>
+      ${v.active ? '<span class="state active">active</span>' : ''}${v.verdict ? `<span class="state ${esc(v.verdict)}">${stateLabel[v.verdict] || esc(v.verdict)}</span>` : v.createdBy === 'seed' ? '<span class="state seed">seed</span>' : '<span class="state pending">not evaluated</span>'}
+      <span class="who">${who}</span><time datetime="${esc(v.createdAt || '')}">${esc(when(v.createdAt))}</time></div>
+    <div class="body">
+      <div>
+        ${v.rationale ? `<h3>Why the editor proposed it</h3><p class="rationale">${esc(v.rationale)}</p>` : ''}
+        ${ops.length ? `<h3>Mutations (${ops.length} op${ops.length > 1 ? 's' : ''})</h3><ul class="ops">${ops.map(renderMutation).join('')}</ul>` : v.createdBy === 'seed' ? '<p class="muted" style="margin:0;font-size:.9rem">Starting point. The editor only ever changes tool descriptions, context limits, Jev instructions, thresholds, confirmations and rules — at most three operations per generation.</p>' : v.verdict === 'no_patch' ? '<p class="muted" style="margin:0;font-size:.9rem">The editor found nothing worth changing in this generation.</p>' : ''}
+      </div>
+      <div>
+        ${after ? benchTable(before, after) : '<p class="muted" style="margin:0;font-size:.9rem">No held-out benchmark recorded for this version.</p>'}
+        ${why ? `<p class="verdict ${esc(v.verdict)}">${esc(why)}</p>` : after && !before ? '<p class="verdict">Baseline measured on held-out goals with recipes disabled, so later versions are compared fairly.</p>' : ''}
+        ${train ? `<p class="keep-rule">On the training split (recipes on): success ${pct(train.successPossible)}, median ${msf(train.medianMs)}.</p>` : ''}
+      </div>
+    </div>
+    <div class="foot">
+      <span>${v.metrics && v.metrics.n ? `${v.metrics.n} live visit${v.metrics.n > 1 ? 's' : ''} ran on this version · ${pct(v.metrics.successRate)} succeeded` : 'no live visits on this version yet'}</span>
+      ${(v.rules || []).length ? `<span>${v.rules.length} rule${v.rules.length > 1 ? 's' : ''} in effect</span>` : ''}
+      ${v.parent != null && byVersion[v.parent] ? `<span>parent <a class="mono" href="#v${v.parent}">v${v.parent}</a></span>` : ''}
+    </div>
+  </article>`;
+}
+
+(async () => {
+  const [evo, runs, cfg] = await Promise.all([
+    fetch(`/api/evolution?site=${encodeURIComponent(site)}`).then((r) => r.json()).catch(() => null),
+    fetch(`/api/runs?site=${encodeURIComponent(site)}`).then((r) => r.json()).catch(() => null),
+    fetch(`/api/config?site=${encodeURIComponent(site)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  ]);
+  const versions = ((evo && (Array.isArray(evo) ? evo : evo.versions)) || []).slice().sort((a, b) => a.version - b.version);
+  const content = $('#content');
+  if (!versions.length) {
+    $('#sub').textContent = `Site ${site}`;
+    content.innerHTML = `<div class="empty"><b>No harness versions yet for site <span class="mono">${esc(site)}</span></b>The first agent visit seeds v1. Run <code>npm run evolve</code> to let the editor propose, benchmark and keep or roll back a change.</div>`;
+    return;
+  }
+  const byVersion = Object.fromEntries(versions.map((v) => [v.version, v]));
+  const active = versions.find((v) => v.active) || versions[versions.length - 1];
+  const kept = versions.filter((v) => v.verdict === 'kept').length, rb = versions.filter((v) => v.verdict === 'rolled_back').length;
+  const first = heldout(versions[0]), cur = heldout(active);
+  $('#sub').textContent = `${versions.length} version${versions.length > 1 ? 's' : ''}: ${kept} kept, ${rb} rolled back` + (first && cur && versions.length > 1 ? ` — success on possible goals ${pct(first.successPossible, 0)} → ${pct(cur.successPossible, 0)}, median ${msf(first.medianMs)} → ${msf(cur.medianMs)}.` : '.');
+  $('#badge-site').textContent = site; $('#badge-v').textContent = 'v' + active.version; $('#badge').hidden = false;
+
+  // timeline chain
+  let chain = '<div class="chain">';
+  versions.forEach((v, i) => {
+    const st = stateOf(v);
+    if (i) chain += `<div class="link ${st === 'rolled_back' ? 'rolled_back' : ''}"></div>`;
+    chain += `<a class="node ${st}" href="#v${v.version}" title="v${v.version}"><span class="disc">v${v.version}</span><small>${esc(stateLabel[st] || st)}${v.parent != null && v.parent !== (versions[i - 1] || {}).version ? `<br>from v${v.parent}` : ''}</small></a>`;
+  });
+  chain += '</div>';
+
+  const rs = ((runs && (runs.runs || runs)) || []).slice().reverse();
+  const runsTable = rs.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>When</th><th>Split</th><th>Config</th><th>Goals</th><th>Success (possible)</th><th>Impossible handled</th><th>Median</th><th>p90</th><th>LLM steps</th></tr></thead><tbody>${rs.map((r) => { const m = r.metrics || {}; return `<tr><td>${esc(when(r.finishedAt || r.startedAt))}</td><td>${esc(r.split)}</td><td class="mono">v${esc(r.configVersion)}</td><td>${m.n ?? r.n ?? ''}</td><td>${pct(m.successPossible)}</td><td>${pct(m.impossibleHandled)}</td><td>${msf(m.medianMs)}</td><td>${msf(m.p90Ms)}</td><td>${pct(m.llmFallbackRate)}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="lede">No benchmark runs recorded yet.</p>';
+
+  content.innerHTML = `
+    <section><h2>Lineage</h2><p class="lede">Each generation the editor proposes at most three changes, benchmarks them on held-out goals, and keeps the version only if it clears the bar.</p>${chain}</section>
+    <section><h2>Success and speed per version</h2><p class="lede">Held-out goals, recipes disabled, so each version is judged on its configuration alone.</p><div id="chart-host">${chart(versions)}</div></section>
+    <section><h2>What v${active.version} does right now</h2><p class="lede">The active configuration every visiting agent is served.</p>${configSummary(cfg) || '<p class="muted">Active config not available.</p>'}</section>
+    <section><h2>Versions</h2><p class="lede">Newest first. Rolled-back versions stay in the record as evidence of what did not work.</p>${versions.slice().reverse().map((v) => versionCard(v, byVersion)).join('')}
+      <p class="keep-rule">Keep rule: a candidate is kept when success on possible goals improves by more than 2 points, or when it is at least 10% faster at the median while success stays within 2 points.</p></section>
+    <section><h2>Benchmark runs</h2><p class="lede">Every simulator run recorded for this site.</p>${runsTable}</section>`;
+  // chart text stays legible on phones: re-render at the container's real width
+  const host = $('#chart-host'); let last = 0, timer = 0;
+  const fit = () => { const w = Math.max(320, Math.min(1040, host.clientWidth - 26)); if (Math.abs(w - last) < 8) return; last = w; host.innerHTML = chart(versions, w); };
+  fit(); addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(fit, 120); });
 })();
 </script>
 </body></html>

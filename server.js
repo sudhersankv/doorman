@@ -2,8 +2,8 @@
 /**
  * Doorman server on node:http (no express). CONTRACTS.md §2, §3.
  *   createServer({ deps, engine, config, recipes, visits, siteDefaults }) -> http.Server
- * Routes: static /shop/*, /doorman.js, /evolution/*; GET /.well-known/doorman.json, /health,
- *   /api/config?site=, /api/evolution?site=, /api/runs?site=; POST /api/map, /api/decide, /api/visit.
+ * Routes: static /shop/*, /doorman.js, /evolution/*, /dashboard/*; GET /.well-known/doorman.json, /health,
+ *   /api/config?site=, /api/evolution?site=, /api/runs?site=, /api/analytics?site=; POST /api/map, /api/decide, /api/visit.
  * Every harness module is injectable so tests can run without the real engine.
  */
 const http = require('node:http');
@@ -218,6 +218,113 @@ function createServer({ deps, engine, config, recipes, visits, siteDefaults = {}
       }));
       return { siteId, runs };
     },
+
+    /**
+     * Everything the dashboard shows, computed from the DB (visits, runs, goals, harness_configs). Observed metrics
+     * carry their n; the inference-cost block is the only estimate and is flagged `kind: 'estimate'` with its assumptions.
+     */
+    async 'GET /api/analytics'(req, url) {
+      const siteId = url.searchParams.get('site') || site.siteId;
+      const db = deps.db;
+      const [rows, runRows, goalRows, cfgRows] = await Promise.all([
+        db.col('visits').find({ siteId }).toArray(), db.col('runs').find({ siteId }).toArray(),
+        db.col('goals').find({}).toArray(), db.col('harness_configs').find({ siteId }).toArray(),
+      ]);
+      const goals = goalRows.filter((g) => !g.siteId || g.siteId === siteId);
+      const byText = new Map(goals.map((g) => [String(g.text || '').trim().toLowerCase(), g]));
+      const kindOf = (goal) => { const g = byText.get(String(goal || '').trim().toLowerCase()); return g && g.kind ? g.kind : 'other'; };
+      const tiersOf = (v) => (v.tierCounts && Object.keys(v.tierCounts).length ? v.tierCounts : countTiers(v.history));
+      const quantile = (sorted, q) => { if (!sorted.length) return null; const pos = (sorted.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos); return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo); };
+      const rate = (num, den) => (den ? +(num / den).toFixed(4) : null);
+      const n = rows.length;
+      const counts = { success: 0, failed: 0, impossible: 0 };
+      for (const v of rows) if (counts[v.outcome] != null) counts[v.outcome]++;
+      const ms = rows.map((v) => Number(v.ms) || 0).sort((a, b) => a - b);
+      const decided = counts.success + counts.failed;
+
+      // (b) intents
+      const kinds = {};
+      for (const v of rows) {
+        const k = kindOf(v.goal); const g = kinds[k] || (kinds[k] = { kind: k, n: 0, success: 0, failed: 0, impossible: 0 });
+        g.n++; if (g[v.outcome] != null) g[v.outcome]++;
+      }
+      const byKind = Object.values(kinds).map((g) => ({ ...g, successRate: rate(g.success, g.success + g.failed) })).sort((a, b) => b.n - a.n);
+      const recent = rows.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 10)
+        .map((v) => ({ goal: v.goal, kind: kindOf(v.goal), outcome: v.outcome, failureReason: v.failureReason || null, ms: Number(v.ms) || 0, steps: v.steps ?? (v.history || []).length, configVersion: v.configVersion ?? null, createdAt: v.createdAt || null }));
+
+      // (c) failures
+      const byReason = {}, reasonByKind = {};
+      for (const v of rows) {
+        if (!v.failureReason) continue;
+        byReason[v.failureReason] = (byReason[v.failureReason] || 0) + 1;
+        const k = kindOf(v.goal); (reasonByKind[k] = reasonByKind[k] || {})[v.failureReason] = (reasonByKind[k][v.failureReason] || 0) + 1;
+      }
+
+      // (d) unmet demand
+      const unmetMap = {};
+      for (const v of rows) {
+        const hit = v.outcome === 'impossible' || v.failureReason === 'not_found' || v.failureReason === 'unavailable';
+        if (!hit) continue;
+        const key = String(v.goal || '').trim();
+        const u = unmetMap[key] || (unmetMap[key] = { goal: key, kind: kindOf(v.goal), n: 0, impossible: 0, not_found: 0, unavailable: 0 });
+        u.n++; if (v.outcome === 'impossible') u.impossible++; if (v.failureReason === 'not_found') u.not_found++; if (v.failureReason === 'unavailable') u.unavailable++;
+      }
+      const unmet = Object.values(unmetMap).sort((a, b) => b.n - a.n);
+
+      // (e) latency histogram
+      let latency = { n, bins: [], maxMs: 0 };
+      if (n) {
+        const max = ms[ms.length - 1] || 1;
+        const binCount = Math.min(12, Math.max(4, Math.ceil(Math.sqrt(n))));
+        const raw = max / binCount; const mag = 10 ** Math.floor(Math.log10(raw || 1)); const nice = [1, 2, 2.5, 5, 10].map((x) => x * mag).find((x) => x >= raw) || raw;
+        const width = Math.max(1, nice); const bins = [];
+        for (let from = 0; from <= max; from += width) bins.push({ from, to: from + width, n: 0 });
+        for (const x of ms) bins[Math.min(bins.length - 1, Math.floor(x / width))].n++;
+        latency = { n, bins, maxMs: max, binWidthMs: width };
+      }
+
+      // (f) tiers
+      const total = {}; const perVersion = {};
+      for (const v of rows) {
+        const tc = tiersOf(v); const key = v.configVersion ?? 'unknown';
+        const pv = perVersion[key] || (perVersion[key] = { configVersion: v.configVersion ?? null, n: 0, steps: 0, tierCounts: {} });
+        pv.n++;
+        for (const [t, c] of Object.entries(tc)) { total[t] = (total[t] || 0) + c; pv.tierCounts[t] = (pv.tierCounts[t] || 0) + c; pv.steps += c; }
+      }
+      const shares = (tc, steps) => Object.fromEntries(Object.entries(tc).map(([t, c]) => [t, rate(c, steps)]));
+      const steps = Object.values(total).reduce((a, b) => a + b, 0);
+      const tiers = { n, steps, total, shares: shares(total, steps), byVersion: Object.values(perVersion).map((pv) => ({ ...pv, shares: shares(pv.tierCounts, pv.steps) })).sort((a, b) => (a.configVersion ?? 0) - (b.configVersion ?? 0)) };
+
+      // (g) inference cost — ESTIMATE from step counts and list prices, never measured
+      const { PRICES } = require('./src/lib/llm');
+      const model = process.env.NEON_MODEL || 'gpt-5-4-mini';
+      const [pIn, pOut] = PRICES[model] || [1, 5];
+      const A = { jevTokensPerStep: 1500, jevUsdPerMTokens: 0.042, llmInputTokensPerStep: 2000, llmOutputTokensPerStep: 150 };
+      const jevSteps = (total.T1_jev || 0) + (total.T2_llm || 0); // every LLM fallback asked Jev first
+      const llmSteps = total.T2_llm || 0;
+      const jevUsd = jevSteps * A.jevTokensPerStep * A.jevUsdPerMTokens / 1e6;
+      const llmUsd = llmSteps * (A.llmInputTokensPerStep * pIn + A.llmOutputTokensPerStep * pOut) / 1e6;
+      const cost = { kind: 'estimate', model, modelPriced: !!PRICES[model], priceUsdPerMTokens: { input: pIn, output: pOut }, assumptions: A, jevSteps, llmSteps, jevUsd: +jevUsd.toFixed(6), llmUsd: +llmUsd.toFixed(6), totalUsd: +(jevUsd + llmUsd).toFixed(6), perVisitUsd: n ? +((jevUsd + llmUsd) / n).toFixed(6) : null,
+        formula: 'Jev: (T1_jev + T2_llm steps) × 1,500 tokens × $0.042/M (input only, output free). LLM: T2_llm steps × (2,000 input × price_in + 150 output × price_out).' };
+
+      // (h) runs + versions
+      const runs = runRows.sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt))).map((r) => ({ runId: r.runId, split: r.split, configVersion: r.configVersion, noRecipes: !!r.noRecipes, startedAt: r.startedAt, finishedAt: r.finishedAt, n: r.metrics?.n ?? (Array.isArray(r.results) ? r.results.length : 0), metrics: r.metrics || null }));
+      const versions = cfgRows.sort((a, b) => a.version - b.version).map((c) => ({ version: c.version, active: !!c.active, verdict: c.verdict || null, createdBy: c.createdBy, createdAt: c.createdAt, visits: perVersion[c.version]?.n || 0, heldout: (c.eval && (c.eval.after || c.eval.heldout)) || null }));
+
+      return {
+        siteId, generatedAt: new Date().toISOString(), kind: 'observed',
+        visits: { n, outcomes: counts, configVersions: Object.keys(perVersion).length },
+        headline: {
+          successRate: { value: rate(counts.success, decided), n: decided, kind: 'observed' },
+          impossibleShare: { value: rate(counts.impossible, n), n, kind: 'observed' },
+          medianMs: { value: quantile(ms, 0.5), n, kind: 'observed' },
+          p90Ms: { value: quantile(ms, 0.9), n, kind: 'observed' },
+        },
+        intents: { byKind, recent, goalsKnown: goals.length },
+        failures: { byReason, byKind: reasonByKind, n: Object.values(byReason).reduce((a, b) => a + b, 0) },
+        unmet, latency, tiers, cost, runs, versions,
+      };
+    },
   };
 
   // ---- plumbing ----
@@ -263,6 +370,7 @@ function createServer({ deps, engine, config, recipes, visits, siteDefaults = {}
         if (p === '/doorman.js') return serveStatic(res, PUBLIC, 'doorman.js');
         if (p.startsWith('/shop')) return serveStatic(res, path.join(PUBLIC, 'shop'), p.slice('/shop'.length) || '/', { indexFallback: true });
         if (p.startsWith('/evolution')) return serveStatic(res, path.join(PUBLIC, 'evolution'), p.slice('/evolution'.length) || '/', { indexFallback: true });
+        if (p.startsWith('/dashboard')) return serveStatic(res, path.join(PUBLIC, 'dashboard'), p.slice('/dashboard'.length) || '/', { indexFallback: true });
       }
       const handler = routes[`${req.method} ${p}`];
       if (!handler) throw new HttpError(404, `no route ${req.method} ${p}`);

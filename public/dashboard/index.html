@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Doorman — agent traffic</title>
+<meta name="description" content="What visiting AI agents asked this site for, how often they got it, where they failed, and what deciding each step cost.">
+<style>
+:root{
+  --bg:#edf0f3;--surface:#ffffff;--surface-2:#f6f8fa;--ink:#1a2130;--muted:#5f6a7a;--faint:#8b95a5;--line:#d4dae2;--line-strong:#b9c2cd;
+  --brass:#9a6b12;--brass-ink:#7a5407;--brass-bg:#f4ead3;--red:#a8413a;--red-bg:#f6e2df;--slate:#4a5a70;--slate-2:#8798ae;--slate-3:#c3cdda;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0e1218;--surface:#161c25;--surface-2:#1c232e;--ink:#e3e7ed;--muted:#8f9aaa;--faint:#6b7686;--line:#283140;--line-strong:#394459;
+  --brass:#d9aa4f;--brass-ink:#e8c37a;--brass-bg:#2b2412;--red:#e27d73;--red-bg:#3a1f1d;--slate:#9fb0c8;--slate-2:#5f7190;--slate-3:#334259;
+}}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 16px 72px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding-bottom:18px;border-bottom:1px solid var(--line-strong)}
+header.top h1{font-size:1.75rem;line-height:1.15;font-weight:650;letter-spacing:-.015em;margin:0}
+header.top p{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px 6px 8px;background:var(--surface);font-size:.9rem;white-space:nowrap}
+.badge[hidden]{display:none}
+.badge .site{font-family:var(--mono);font-size:.85rem;color:var(--muted)}
+.badge .v{font-family:var(--mono);font-weight:700;color:var(--brass-ink);background:var(--brass-bg);border-radius:999px;padding:1px 9px}
+.badge .dot{width:8px;height:8px;border-radius:50%;background:var(--brass);box-shadow:0 0 0 3px var(--brass-bg)}
+nav.pages{font-size:.85rem;color:var(--muted);margin-top:10px}
+nav.pages a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line-strong)}
+nav.pages a[aria-current]{color:var(--ink);border-color:var(--ink)}
+nav.pages span{margin:0 8px;color:var(--faint)}
+section{margin-top:36px}
+h2{font-size:1.1rem;font-weight:650;letter-spacing:-.01em;margin:0 0 4px}
+.lede{margin:0 0 14px;color:var(--muted);font-size:.9rem}
+.muted{color:var(--muted)}.mono{font-family:var(--mono)}
+.tag{display:inline-block;font-size:.72rem;font-weight:650;padding:1px 7px;border-radius:4px;border:1px solid var(--line-strong);color:var(--muted);vertical-align:middle;letter-spacing:.01em}
+.tag.est{color:var(--red);border-color:var(--red);background:var(--red-bg)}
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tile{background:var(--surface);padding:16px 18px 14px;min-width:0}
+.tile .l{font-size:.82rem;color:var(--muted);margin-bottom:6px}
+.tile .n{font-size:2rem;font-weight:650;letter-spacing:-.02em;line-height:1.1}
+.tile .n small{font-size:1rem;font-weight:500;color:var(--muted);margin-left:2px}
+.tile .s{font-size:.76rem;color:var(--faint);margin-top:6px}
+/* two-col */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+.card h3{font-size:.95rem;font-weight:650;margin:0 0 2px}
+.card .sub{font-size:.8rem;color:var(--muted);margin:0 0 12px}
+/* bars list */
+.bars{list-style:none;margin:0;padding:0}
+.bars li{display:grid;grid-template-columns:minmax(90px,30%) 1fr auto;gap:10px;align-items:center;padding:6px 0;font-size:.88rem;border-top:1px solid var(--line)}
+.bars li:first-child{border-top:0;padding-top:0}
+.bars .k{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bars .bar{height:10px;background:var(--surface-2);border-radius:3px;overflow:hidden;position:relative}
+.bars .bar i{display:block;height:100%;background:var(--slate-2);border-radius:3px}
+.bars .bar i.ok{background:var(--brass)}
+.bars .bar i.bad{background:var(--red)}
+.bars .v{font-size:.84rem;white-space:nowrap;text-align:right}
+.bars .v b{font-weight:650}
+/* tables */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl{width:100%;border-collapse:collapse;font-size:.86rem;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tbl th,.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;vertical-align:top}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td.goal{white-space:normal;min-width:160px;max-width:460px}
+.tbl th{font-size:.74rem;font-weight:600;color:var(--muted)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl.inner{border:0;border-radius:0;background:transparent}
+.tbl.inner th,.tbl.inner td{padding:6px 0 6px 12px}.tbl.inner th:first-child,.tbl.inner td:first-child{padding-left:0}
+.out{font-size:.76rem;font-weight:650;padding:1px 8px;border-radius:999px;border:1px solid transparent}
+.out.success{color:var(--brass-ink);background:var(--brass-bg);border-color:var(--brass)}
+.out.failed{color:var(--red);background:var(--red-bg);border-color:var(--red)}
+.out.impossible{color:var(--muted);background:var(--surface-2);border-color:var(--line-strong)}
+/* svg */
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--muted);padding:8px 0 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+/* stacked tier bars */
+.stack{margin:10px 0 0}
+.stack .row{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:center;padding:6px 0;font-size:.86rem}
+.stack .row .k{font-family:var(--mono);font-size:.82rem;color:var(--muted)}
+.stack .row.total .k{color:var(--ink);font-weight:700}
+.stack .bar{display:flex;height:18px;border-radius:4px;overflow:hidden;background:var(--surface-2)}
+.stack .bar span{display:block;height:100%;min-width:0}
+.stack .bar span.T0_tool{background:var(--slate-3)}
+.stack .bar span.T1_recipe{background:var(--brass-bg);border-right:1px solid var(--brass)}
+.stack .bar span.T1_jev{background:var(--brass)}
+.stack .bar span.T2_llm{background:var(--red)}
+.stack .meta{font-size:.76rem;color:var(--faint);margin-top:2px}
+/* cost */
+.cost{border-color:var(--red);border-style:dashed}
+.cost .big{display:flex;flex-wrap:wrap;gap:12px 36px;margin:10px 0 14px}
+.cost .big div{min-width:120px}
+.cost .big .n{font-size:1.7rem;font-weight:650;letter-spacing:-.02em;line-height:1.1}
+.cost .big .l{font-size:.78rem;color:var(--muted)}
+.formula{font-family:var(--mono);font-size:.78rem;line-height:1.6;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;color:var(--muted)}
+.empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:12px;padding:28px 20px;text-align:center;color:var(--muted);max-width:60ch;margin:24px auto}
+.empty b{display:block;color:var(--ink);font-size:1.05rem;margin-bottom:6px}
+.empty code{font-family:var(--mono);background:var(--surface-2);padding:1px 6px;border-radius:4px;border:1px solid var(--line)}
+.none{font-size:.88rem;color:var(--muted);margin:0;padding:10px 0 0}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Agent traffic</h1>
+      <p id="sub">Loading…</p>
+      <nav class="pages" aria-label="Pages"><a id="evo-link" href="/evolution/">Evolution</a><span>/</span><a href="/dashboard/" aria-current="page">Traffic dashboard</a><span>/</span><a id="shop-link" href="/shop/">Site</a></nav>
+    </div>
+    <div class="badge" id="badge" hidden><span class="dot" aria-hidden="true"></span><span class="site" id="badge-site"></span><span>active</span><span class="v" id="badge-v"></span></div>
+  </header>
+  <div id="content"></div>
+</div>
+<script>
+'use strict';
+const site = new URLSearchParams(location.search).get('site') || 'trailhead';
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pct = (x, d = 1) => (x == null || Number.isNaN(x) ? '—' : (Math.round(x * 100 * 10 ** d) / 10 ** d).toFixed(d) + '%');
+const msf = (x) => (x == null || Number.isNaN(x) ? '—' : Math.round(x).toLocaleString('en-US') + ' ms');
+const usd = (x) => (x == null ? '—' : x < 0.01 ? '$' + x.toFixed(4) : x < 1 ? '$' + x.toFixed(3) : '$' + x.toFixed(2));
+const when = (iso) => (iso ? new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
+const obs = (n) => `<span class="tag">observed · n=${n}</span>`;
+const kindLabel = (k) => ({ add_to_cart: 'add to cart', place_order: 'place order', find: 'find a product', view_order: 'view an order', impossible: 'out-of-scope request', other: 'unmatched goal' })[k] || k;
+const reasonLabel = (r) => ({ not_found: 'not found', validation_error: 'validation error', login_required: 'login required', unavailable: 'unavailable', blocked: 'blocked', other: 'other' })[r] || r;
+const TIERS = [['T0_tool', 'tool call (no inference)'], ['T1_recipe', 'learned recipe'], ['T1_jev', 'Jev'], ['T2_llm', 'LLM fallback']];
+for (const a of ['evo-link', 'shop-link']) if (site !== 'trailhead') $('#' + a).href += '?site=' + encodeURIComponent(site);
+
+function tiles(a) {
+  const h = a.headline, o = a.visits.outcomes;
+  const t = [
+    ['Visits observed', `${a.visits.n}`, `${o.success} succeeded · ${o.failed} failed · ${o.impossible} reported impossible`],
+    ['Task success rate', pct(h.successRate.value), `observed · n=${h.successRate.n} decided visits (success + failed)`],
+    ['Impossible correctly reported', pct(h.impossibleShare.value), `observed · n=${h.impossibleShare.n} · share of visits the agent declined`],
+    ['Median latency', msf(h.medianMs.value), `observed · n=${h.medianMs.n} · p90 ${msf(h.p90Ms.value)}`],
+  ];
+  return `<div class="tiles">${t.map(([l, n, s]) => `<div class="tile"><div class="l">${l}</div><div class="n">${n}</div><div class="s">${esc(s)}</div></div>`).join('')}</div>`;
+}
+
+function intents(a) {
+  const rows = a.intents.byKind;
+  const max = Math.max(1, ...rows.map((r) => r.n));
+  const list = rows.length ? `<ul class="bars">${rows.map((r) => `<li><span class="k" title="${esc(r.kind)}">${esc(kindLabel(r.kind))}</span><span class="bar"><i class="ok" style="width:${(r.n / max) * 100}%"></i></span><span class="v"><b>${r.n}</b> · ${r.successRate == null ? 'no decided visits' : pct(r.successRate, 0) + ' success'}</span></li>`).join('')}</ul>` : '<p class="none">No visits to group.</p>';
+  const recent = a.intents.recent;
+  const table = recent.length ? `<div class="scroll"><table class="tbl inner"><thead><tr><th>Goal</th><th>Outcome</th><th>Steps · time</th></tr></thead><tbody>${recent.map((r) => `<tr><td class="goal">${esc(r.goal)}<div class="muted" style="font-size:.76rem">${esc(kindLabel(r.kind))}${r.configVersion != null ? ' · <span class="mono">v' + r.configVersion + '</span>' : ''}</div></td><td><span class="out ${esc(r.outcome)}">${esc(r.outcome)}</span>${r.failureReason ? `<div class="muted" style="font-size:.76rem">${esc(reasonLabel(r.failureReason))}</div>` : ''}</td><td>${r.steps} · ${msf(r.ms)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="none">No visits yet.</p>';
+  return `<div class="cols"><div class="card"><h3>What agents ask for ${obs(a.visits.n)}</h3><p class="sub">Visits grouped by the benchmark goal kind their goal text matches${a.intents.goalsKnown ? ` (${a.intents.goalsKnown} known goals)` : ''}; unmatched text counts as “unmatched goal”.</p>${list}</div>
+  <div class="card"><h3>Most recent goals</h3><p class="sub">Last ${recent.length} visits, newest first.</p>${table}</div></div>`;
+}
+
+function failures(a) {
+  const entries = Object.entries(a.failures.byReason).sort((x, y) => y[1] - x[1]);
+  const max = Math.max(1, ...entries.map((e) => e[1]));
+  const list = entries.length ? `<ul class="bars">${entries.map(([r, n]) => `<li><span class="k">${esc(reasonLabel(r))}</span><span class="bar"><i class="bad" style="width:${(n / max) * 100}%"></i></span><span class="v"><b>${n}</b> · ${pct(n / a.failures.n, 0)}</span></li>`).join('')}</ul>` : '<p class="none">No failures recorded — every visit so far either succeeded or was correctly declined.</p>';
+  const kinds = Object.keys(a.failures.byKind), reasons = entries.map((e) => e[0]);
+  const matrix = kinds.length ? `<div class="scroll"><table class="tbl inner"><thead><tr><th>Intent</th>${reasons.map((r) => `<th>${esc(reasonLabel(r))}</th>`).join('')}</tr></thead><tbody>${kinds.map((k) => `<tr><td>${esc(kindLabel(k))}</td>${reasons.map((r) => `<td>${a.failures.byKind[k][r] || '<span class="muted">·</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
+  return `<div class="cols"><div class="card"><h3>Why visits fail ${obs(a.failures.n)}</h3><p class="sub">Failure reason assigned by the verifier when a visit did not succeed (impossible visits included).</p>${list}</div>
+  <div class="card"><h3>Failure reason by intent</h3><p class="sub">Which kinds of requests break in which way.</p>${matrix || '<p class="none">Nothing to cross-tabulate yet.</p>'}</div></div>`;
+}
+
+function unmet(a) {
+  const rows = a.unmet;
+  if (!rows.length) return `<p class="none">No unmet demand recorded: no visit ended impossible, not-found or unavailable.</p>`;
+  return `<div class="scroll"><table class="tbl"><thead><tr><th>Goal (as the agent phrased it)</th><th>Intent</th><th>Times</th><th>Impossible</th><th>Not found</th><th>Unavailable</th></tr></thead><tbody>${rows.slice(0, 25).map((r) => `<tr><td class="goal">${esc(r.goal)}</td><td>${esc(kindLabel(r.kind))}</td><td><b>${r.n}</b></td><td>${r.impossible || '<span class="muted">·</span>'}</td><td>${r.not_found || '<span class="muted">·</span>'}</td><td>${r.unavailable || '<span class="muted">·</span>'}</td></tr>`).join('')}</tbody></table></div>${rows.length > 25 ? `<p class="none">+${rows.length - 25} more goals</p>` : ''}`;
+}
+
+function histogram(a, W = 1040) {
+  const L = a.latency;
+  if (!L.n || !L.bins.length) return '<p class="none">No visit timings yet.</p>';
+  const H = W < 600 ? 200 : 240, l = 36, r = 12, t = 18, b = 40, iw = W - l - r, ih = H - t - b;
+  const max = Math.max(1, ...L.bins.map((x) => x.n));
+  const bw = iw / L.bins.length;
+  const fmtMs = (x) => (x >= 1000 ? (x / 1000).toFixed(x % 1000 ? 1 : 0) + ' s' : Math.round(x) + ' ms');
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Histogram of visit latency">`;
+  const steps = Math.min(4, max);
+  for (let i = 0; i <= steps; i++) { const v = Math.round((max * i) / steps), y = t + ih - (v / max) * ih; s += `<line x1="${l}" x2="${W - r}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${l - 8}" y="${y + 4}" font-size="11" text-anchor="end" fill="var(--muted)">${v}</text>`; }
+  const med = a.headline.medianMs.value, p90 = a.headline.p90Ms.value, span = L.bins[L.bins.length - 1].to;
+  L.bins.forEach((bin, i) => {
+    const h = (bin.n / max) * ih, x = l + i * bw + 2, y = t + ih - h;
+    s += `<rect x="${x}" y="${y}" width="${Math.max(1, bw - 4)}" height="${h}" rx="2" fill="var(--slate-2)"/>`;
+    if (bin.n) s += `<text x="${x + (bw - 4) / 2}" y="${y - 5}" font-size="11" text-anchor="middle" fill="var(--muted)">${bin.n}</text>`;
+    const every = Math.ceil(L.bins.length / (W < 600 ? 4 : 8));
+    if (i % every === 0) s += `<text x="${l + i * bw}" y="${H - 18}" font-size="11" text-anchor="middle" fill="var(--muted)">${fmtMs(bin.from)}</text>`;
+  });
+  for (const [v, label, col] of [[med, 'median', 'var(--brass)'], [p90, 'p90', 'var(--red)']]) {
+    if (v == null) continue; const x = l + (v / span) * iw;
+    s += `<line x1="${x}" x2="${x}" y1="${t}" y2="${t + ih}" stroke="${col}" stroke-width="2" stroke-dasharray="4 3"/><text x="${x + 5}" y="${t + 12}" font-size="11" fill="${col}" font-weight="600">${label} ${fmtMs(v)}</text>`;
+  }
+  s += '</svg>';
+  return `<div class="card chart">${s}<div class="legend"><span><i style="background:var(--slate-2)"></i>visits per ${fmtMs(L.binWidthMs)} bucket</span><span><i style="background:var(--brass)"></i>median</span><span><i style="background:var(--red)"></i>p90</span></div></div>`;
+}
+
+function tierRow(label, tc, steps, cls = '') {
+  const segs = TIERS.map(([k]) => (tc[k] ? `<span class="${k}" style="width:${(tc[k] / steps) * 100}%" title="${k}: ${tc[k]}"></span>` : '')).join('');
+  const meta = TIERS.filter(([k]) => tc[k]).map(([k, l]) => `${l} ${pct(tc[k] / steps, 0)}`).join(' · ');
+  return `<div class="row ${cls}"><span class="k">${esc(label)}</span><div><div class="bar">${segs}</div><div class="meta">${steps} steps · ${meta}</div></div></div>`;
+}
+function tiers(a) {
+  const T = a.tiers;
+  if (!T.steps) return '<p class="none">No decided steps recorded yet.</p>';
+  return `<div class="card"><h3>Who decided each step ${obs(T.n)}</h3><p class="sub">Share of all ${T.steps} steps across ${T.n} visits, then per harness version. Jev is the fast System-1 oracle; the LLM only runs when Jev is unsure.</p>
+    <div class="stack">${tierRow('all', T.total, T.steps, 'total')}${T.byVersion.map((v) => tierRow(v.configVersion != null ? 'v' + v.configVersion : 'unknown', v.tierCounts, v.steps)).join('')}</div>
+    <div class="legend">${TIERS.map(([k, l]) => `<span><i class="${k}" style="background:var(--${k === 'T0_tool' ? 'slate-3' : k === 'T1_recipe' ? 'brass-bg' : k === 'T1_jev' ? 'brass' : 'red'})"></i>${l}</span>`).join('')}</div></div>`;
+}
+
+function cost(a) {
+  const c = a.cost, A = c.assumptions;
+  return `<div class="card cost"><h3>Inference cost <span class="tag est">ESTIMATE</span></h3><p class="sub">Not measured. Derived from the observed step counts above and list prices${c.modelPriced ? '' : ' (model not in the price table; generic $' + c.priceUsdPerMTokens.input + '/$' + c.priceUsdPerMTokens.output + ' used)'}. Token counts per step are assumptions.</p>
+    <div class="big"><div><div class="n">${usd(c.totalUsd)}</div><div class="l">estimated total · ${a.visits.n} visits</div></div><div><div class="n">${usd(c.perVisitUsd)}</div><div class="l">estimated per visit</div></div><div><div class="n">${usd(c.jevUsd)}</div><div class="l">Jev · ${c.jevSteps} calls</div></div><div><div class="n">${usd(c.llmUsd)}</div><div class="l">LLM · ${c.llmSteps} calls · <span class="mono">${esc(c.model)}</span></div></div></div>
+    <div class="formula">Jev  = (T1_jev + T2_llm steps) × ${A.jevTokensPerStep.toLocaleString('en-US')} tokens × $${A.jevUsdPerMTokens}/M   (input only, output free; every LLM fallback asked Jev first)
+     = ${c.jevSteps} × ${A.jevTokensPerStep.toLocaleString('en-US')} × $${A.jevUsdPerMTokens}/M = ${usd(c.jevUsd)}
+LLM  = T2_llm steps × (${A.llmInputTokensPerStep.toLocaleString('en-US')} input × $${c.priceUsdPerMTokens.input}/M + ${A.llmOutputTokensPerStep} output × $${c.priceUsdPerMTokens.output}/M)
+     = ${c.llmSteps} × $${((A.llmInputTokensPerStep * c.priceUsdPerMTokens.input + A.llmOutputTokensPerStep * c.priceUsdPerMTokens.output) / 1e6).toFixed(5)} = ${usd(c.llmUsd)}</div></div>`;
+}
+
+function versions(a) {
+  if (!a.versions.length && !a.runs.length) return '<p class="none">No harness versions or benchmark runs yet.</p>';
+  const latestHeldout = {}; for (const r of a.runs) if (r.split === 'heldout' && r.metrics) latestHeldout[r.configVersion] = r;
+  const vt = a.versions.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>Version</th><th>State</th><th>Live visits</th><th>Held-out success</th><th>Impossible handled</th><th>Median</th><th>p90</th><th>LLM steps</th><th>Recipe hits</th><th>Goals</th></tr></thead><tbody>${a.versions.map((v) => { const m = (latestHeldout[v.version] && latestHeldout[v.version].metrics) || v.heldout || {}; return `<tr><td class="mono"><b>v${v.version}</b></td><td>${v.active ? '<span class="out success">active</span>' : v.verdict ? `<span class="out ${v.verdict === 'rolled_back' ? 'failed' : 'impossible'}">${esc(v.verdict.replace('_', ' '))}</span>` : '<span class="muted">seed</span>'}</td><td>${v.visits}</td><td>${pct(m.successPossible)}</td><td>${pct(m.impossibleHandled)}</td><td>${msf(m.medianMs)}</td><td>${msf(m.p90Ms)}</td><td>${pct(m.llmFallbackRate)}</td><td>${pct(m.recipeHitRate)}</td><td>${m.n ?? '—'}</td></tr>`; }).join('')}</tbody></table></div>` : '';
+  return vt + `<p class="none">${a.runs.length} benchmark run${a.runs.length === 1 ? '' : 's'} recorded. Held-out numbers come from the latest held-out run per version. <a id="evo-link-2" href="/evolution/">See the full evolution record.</a></p>`;
+}
+
+(async () => {
+  let a = null;
+  try { const r = await fetch(`/api/analytics?site=${encodeURIComponent(site)}`); a = r.ok ? await r.json() : null; } catch {}
+  const content = $('#content');
+  if (!a) { $('#sub').textContent = `Site ${site}`; content.innerHTML = `<div class="empty"><b>Could not load analytics</b>The server did not answer <code>/api/analytics?site=${esc(site)}</code>. Check that Doorman is running and the database is reachable.</div>`; return; }
+  const active = a.versions.find((v) => v.active);
+  if (active) { $('#badge-site').textContent = site; $('#badge-v').textContent = 'v' + active.version; $('#badge').hidden = false; }
+  if (!a.visits.n) {
+    $('#sub').textContent = `Site ${site}`;
+    content.innerHTML = `<div class="empty"><b>No visits yet for site <span class="mono">${esc(site)}</span></b>Numbers appear after the first agent calls <code>window.doorman.do(goal)</code> on the site, or after a benchmark run (<code>npm run bench</code>) sends visits through the harness.</div>${a.versions.length ? `<section><h2>Harness versions</h2><p class="lede">Benchmark results exist even though no live visits have been logged.</p>${versions(a)}</section>` : ''}`;
+    return;
+  }
+  const h = a.headline;
+  $('#sub').textContent = `${a.visits.n} visits observed across ${a.visits.configVersions} harness version${a.visits.configVersions === 1 ? '' : 's'}. ${pct(h.successRate.value, 0)} of decided visits succeeded; median ${msf(h.medianMs.value)}. Generated ${when(a.generatedAt)}.`;
+  content.innerHTML = `
+    <section>${tiles(a)}</section>
+    <section><h2>Agent intents</h2><p class="lede">What agents came to do, and how it went.</p>${intents(a)}</section>
+    <section><h2>Failure categories</h2><p class="lede">Where the harness, the site, or the request itself broke down.</p>${failures(a)}</section>
+    <section><h2>Unmet demand ${obs(a.unmet.reduce((n, u) => n + u.n, 0))}</h2><p class="lede">Goals that ended impossible, not found, or unavailable — what agents want that the site does not offer.</p>${unmet(a)}</section>
+    <section><h2>Latency distribution ${obs(a.latency.n)}</h2><p class="lede">Wall-clock time per visit, including page actions.</p><div id="hist-host">${histogram(a)}</div></section>
+    <section><h2>Jev vs LLM vs recipe</h2>${tiers(a)}</section>
+    <section><h2>Inference cost</h2>${cost(a)}</section>
+    <section><h2>Per-version benchmarks</h2><p class="lede">Every harness version with its live visit count and latest held-out benchmark.</p>${versions(a)}</section>`;
+  const l2 = $('#evo-link-2'); if (l2 && site !== 'trailhead') l2.href += '?site=' + encodeURIComponent(site);
+  const host = $('#hist-host'); let last = 0, timer = 0;
+  const fit = () => { const w = Math.max(320, Math.min(1040, host.clientWidth - 38)); if (Math.abs(w - last) < 8) return; last = w; host.innerHTML = histogram(a, w); };
+  fit(); addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(fit, 120); });
+})();
+</script>
+</body></html>
