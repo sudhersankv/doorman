@@ -38,6 +38,7 @@ function createServer({ deps, engine, config, recipes, visits, siteDefaults = {}
   config = config || optional('./src/harness/config');
   recipes = recipes || optional('./src/harness/recipes');
   visits = visits || optional('./src/harness/visits');
+  if (recipes && !deps.recipes) deps = { ...deps, recipes }; // the engine's recipe tier looks for deps.recipes
   const site = { siteId: 'trailhead', configCacheMs: 5000, ...siteDefaults };
   const log = deps.log || (() => {});
 
