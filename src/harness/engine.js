@@ -308,8 +308,11 @@ async function tierJev({ goal, page, history, config, deps, trace, recipes, forc
   const feasible = a.feasible && typeof a.feasible.noul === 'number' ? a.feasible.noul : 1;
   const next = a.next || {};
   const confidence = typeof next.confidence === 'number' ? next.confidence : 0;
-  if (history.length <= 1 && feasible < 1 - cfg.guardrails.impossibleThreshold) {
-    return { step: { action: null, impossible: true, tier: 'T1_jev', confidence: +(1 - feasible).toFixed(3), reason: `goal judged infeasible (feasible=${feasible.toFixed(2)})` }, state };
+  // Infeasible: judged on the first steps, or at any step right after the page answered with an alert
+  // (e.g. "no results", "out of stock", "invalid"). Later steps without an alert never stop the visit.
+  const alerted = !!lastAlert(history);
+  if ((history.length <= 1 || alerted) && feasible < 1 - cfg.guardrails.impossibleThreshold) {
+    return { step: { action: null, impossible: true, tier: 'T1_jev', confidence: +(1 - feasible).toFixed(3), reason: `goal judged infeasible (feasible=${feasible.toFixed(2)}${alerted ? ', after an alert' : ''})` }, state };
   }
   if (confidence < cfg.jev.confidenceThreshold || next.choice == null) return { step: null, state, low: { choice: next.choice, confidence } };
   if (next.choice === 'done') return { step: { action: null, done: true, tier: 'T1_jev', confidence, reason: 'Jev: goal already achieved' }, state };
