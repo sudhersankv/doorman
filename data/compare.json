@@ -1,0 +1,2162 @@
+{
+ "runId": "31693caf-6221-48ba-adb7-a0fb9b368a73",
+ "siteId": "trailhead",
+ "baseUrl": "http://localhost:3000",
+ "split": "heldout",
+ "startedAt": "2026-10-11T22:06:22.567Z",
+ "finishedAt": "2026-10-11T22:09:35.423Z",
+ "model": "gpt-5-mini",
+ "costAssumptions": {
+  "doorman": {
+   "kind": "estimate",
+   "jevTokensPerStep": 1500,
+   "jevUsdPerMTokens": 0.042,
+   "llmInputTokensPerStep": 2000,
+   "llmOutputTokensPerStep": 150,
+   "priceUsdPerMTokens": [
+    0.25,
+    2
+   ]
+  },
+  "baseline": {
+   "kind": "measured",
+   "priceUsdPerMTokens": [
+    0.25,
+    2
+   ]
+  }
+ },
+ "goals": [
+  {
+   "goalId": "g001_add_to_cart_ok_ec4236",
+   "kind": "add_to_cart",
+   "text": "Road Racer size 9, add to cart",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 5806,
+    "steps": 4,
+    "llmCalls": 4,
+    "tokens": {
+     "prompt": 2718,
+     "completion": 156
+    },
+    "costUsd": 0.000991,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 11,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1406
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "9",
+      "result": "ok",
+      "llmMs": 926
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1013
+     },
+     {
+      "action": "done",
+      "ref": 11,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1099
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 3592,
+    "steps": 3,
+    "llmCalls": 0,
+    "jevCalls": 4,
+    "costUsdEstimate": 0.000252,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 4
+    },
+    "impossibleReported": false,
+    "visitId": "aaaefd33-4c84-40f3-9057-f0023f6f6b01"
+   }
+  },
+  {
+   "goalId": "g003_add_to_cart_ok_9c0f2b",
+   "kind": "add_to_cart",
+   "text": "add teh summit hiker sz 11 to my cart pls",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 7337,
+    "steps": 5,
+    "llmCalls": 5,
+    "tokens": {
+     "prompt": 3342,
+     "completion": 223
+    },
+    "costUsd": 0.001282,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 13,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1374
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "11",
+      "result": "ok",
+      "llmMs": 1037
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1065
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1090
+     },
+     {
+      "action": "done",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 975
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 2069,
+    "steps": 3,
+    "llmCalls": 0,
+    "jevCalls": 1,
+    "costUsdEstimate": 0.000063,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_recipe": 3,
+     "T1_jev": 1
+    },
+    "impossibleReported": false,
+    "visitId": "9e7eef94-6b74-4b5f-a753-2e53e9430ffd"
+   }
+  },
+  {
+   "goalId": "g004_add_to_cart_ok_a6089e",
+   "kind": "add_to_cart",
+   "text": "Add the Rain Boot in size 8 to my cart.",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 7201,
+    "steps": 5,
+    "llmCalls": 5,
+    "tokens": {
+     "prompt": 3316,
+     "completion": 230
+    },
+    "costUsd": 0.001289,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 14,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1124
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "8",
+      "result": "ok",
+      "llmMs": 990
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1090
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 977
+     },
+     {
+      "action": "done",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1263
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 1546,
+    "steps": 3,
+    "llmCalls": 0,
+    "jevCalls": 1,
+    "costUsdEstimate": 0.000063,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_recipe": 3,
+     "T1_jev": 1
+    },
+    "impossibleReported": false,
+    "visitId": "fc83357e-e68b-40fe-82ba-82927107fdbc"
+   }
+  },
+  {
+   "goalId": "g005_add_to_cart_ok_a436a3",
+   "kind": "add_to_cart",
+   "text": "Canvas Sneaker size 7, add to cart",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 5394,
+    "steps": 4,
+    "llmCalls": 4,
+    "tokens": {
+     "prompt": 2737,
+     "completion": 173
+    },
+    "costUsd": 0.00103,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 15,
+      "value": "",
+      "result": "ok",
+      "llmMs": 987
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "7",
+      "result": "ok",
+      "llmMs": 1048
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1037
+     },
+     {
+      "action": "done",
+      "ref": 0,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1000
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 2224,
+    "steps": 3,
+    "llmCalls": 0,
+    "jevCalls": 1,
+    "costUsdEstimate": 0.000063,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_recipe": 3,
+     "T1_jev": 1
+    },
+    "impossibleReported": false,
+    "visitId": "c06eb024-3a94-4c68-bb55-a8afe6fa9a74"
+   }
+  },
+  {
+   "goalId": "g008_add_to_cart_ok_bfabbf",
+   "kind": "add_to_cart",
+   "text": "Add the Rain Shell Jacket in size M to my cart.",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 5526,
+    "steps": 4,
+    "llmCalls": 4,
+    "tokens": {
+     "prompt": 2672,
+     "completion": 177
+    },
+    "costUsd": 0.001022,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 18,
+      "value": "",
+      "result": "ok",
+      "llmMs": 962
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "M",
+      "result": "ok",
+      "llmMs": 938
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1246
+     },
+     {
+      "action": "done",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1046
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 3821,
+    "steps": 3,
+    "llmCalls": 0,
+    "jevCalls": 4,
+    "costUsdEstimate": 0.000252,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 4
+    },
+    "impossibleReported": false,
+    "visitId": "c8288459-c5db-4487-8b18-f2b9183ac3c5"
+   }
+  },
+  {
+   "goalId": "g010_add_to_cart_ok_68335c",
+   "kind": "add_to_cart",
+   "text": "Hey! Could you grab the Wool Hiking Socks in a size M and put it in my cart? Thanks a bunch!",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 5958,
+    "steps": 4,
+    "llmCalls": 4,
+    "tokens": {
+     "prompt": 2717,
+     "completion": 181
+    },
+    "costUsd": 0.001041,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 20,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1198
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "M",
+      "result": "ok",
+      "llmMs": 1051
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1412
+     },
+     {
+      "action": "done",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1000
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 2852,
+    "steps": 3,
+    "llmCalls": 0,
+    "jevCalls": 4,
+    "costUsdEstimate": 0.000252,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 4
+    },
+    "impossibleReported": false,
+    "visitId": "924f75f5-f492-4b8d-bd49-e77fe4013e67"
+   }
+  },
+  {
+   "goalId": "g012_add_to_cart_ok_f1ae8a",
+   "kind": "add_to_cart",
+   "text": "Add the Trail Runner in size 9 to my cart.",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 6080,
+    "steps": 4,
+    "llmCalls": 4,
+    "tokens": {
+     "prompt": 2738,
+     "completion": 178
+    },
+    "costUsd": 0.00104,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1576
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "9",
+      "result": "ok",
+      "llmMs": 1044
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1019
+     },
+     {
+      "action": "done",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1155
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 4924,
+    "steps": 3,
+    "llmCalls": 0,
+    "jevCalls": 4,
+    "costUsdEstimate": 0.000252,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 4
+    },
+    "impossibleReported": false,
+    "visitId": "fa391bd2-885b-4be6-8a1c-82685e88e701"
+   }
+  },
+  {
+   "goalId": "g015_add_to_cart_ok_bae223",
+   "kind": "add_to_cart",
+   "text": "add teh featherlight racer sz 10 to my cart pls",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 7971,
+    "steps": 5,
+    "llmCalls": 5,
+    "tokens": {
+     "prompt": 3330,
+     "completion": 242
+    },
+    "costUsd": 0.001316,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 12,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1280
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "10",
+      "result": "ok",
+      "llmMs": 1167
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1082
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1077
+     },
+     {
+      "action": "done",
+      "ref": 7,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1608
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 3627,
+    "steps": 3,
+    "llmCalls": 0,
+    "jevCalls": 4,
+    "costUsdEstimate": 0.000252,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 4
+    },
+    "impossibleReported": false,
+    "visitId": "5593075d-6f10-4740-8c04-1190a2339604"
+   }
+  },
+  {
+   "goalId": "g017_place_order_ok_c34db8",
+   "kind": "place_order",
+   "text": "order Road Racer size 9, ship to 10001",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 19418,
+    "steps": 12,
+    "llmCalls": 12,
+    "tokens": {
+     "prompt": 8392,
+     "completion": 588
+    },
+    "costUsd": 0.003274,
+    "costMeasured": true,
+    "stoppedBecause": "max_steps",
+    "done": false,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 11,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1012
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "9",
+      "result": "ok",
+      "llmMs": 1308
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 998
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 987
+     },
+     {
+      "action": "click",
+      "ref": 8,
+      "value": "",
+      "result": "ok",
+      "llmMs": 890
+     },
+     {
+      "action": "fill",
+      "ref": 9,
+      "value": "10001",
+      "result": "ok",
+      "llmMs": 1448
+     },
+     {
+      "action": "fill",
+      "ref": 7,
+      "value": "Alex Rider",
+      "result": "ok",
+      "llmMs": 995
+     },
+     {
+      "action": "fill",
+      "ref": 8,
+      "value": "123 Main St",
+      "result": "ok",
+      "llmMs": 1024
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1457
+     },
+     {
+      "action": "click",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1131
+     },
+     {
+      "action": "click",
+      "ref": 11,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1177
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "9",
+      "result": "ok",
+      "llmMs": 1848
+     }
+    ]
+   },
+   "doorman": {
+    "success": false,
+    "failureKind": "possible-agent",
+    "reason": "INCOMPLETE",
+    "ms": 5820,
+    "steps": 6,
+    "llmCalls": 1,
+    "jevCalls": 7,
+    "costUsdEstimate": 0.001241,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 6,
+     "T2_llm": 1
+    },
+    "impossibleReported": false,
+    "visitId": "e9b200e9-1ebc-4c0d-b7c3-192524700068"
+   }
+  },
+  {
+   "goalId": "g020_place_order_ok_4761df",
+   "kind": "place_order",
+   "text": "Please purchase the Insulated Bottle and complete checkout for Sam Trail, 1 Ferry Building, ZIP 02134.",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 12780,
+    "steps": 9,
+    "llmCalls": 9,
+    "tokens": {
+     "prompt": 5841,
+     "completion": 382
+    },
+    "costUsd": 0.002224,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 21,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1148
+     },
+     {
+      "action": "click",
+      "ref": 9,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1184
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1056
+     },
+     {
+      "action": "click",
+      "ref": 8,
+      "value": "",
+      "result": "ok",
+      "llmMs": 997
+     },
+     {
+      "action": "fill",
+      "ref": 7,
+      "value": "Sam Trail",
+      "result": "ok",
+      "llmMs": 1096
+     },
+     {
+      "action": "fill",
+      "ref": 8,
+      "value": "1 Ferry Building",
+      "result": "ok",
+      "llmMs": 934
+     },
+     {
+      "action": "fill",
+      "ref": 9,
+      "value": "02134",
+      "result": "ok",
+      "llmMs": 989
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 973
+     },
+     {
+      "action": "done",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 938
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 9588,
+    "steps": 7,
+    "llmCalls": 2,
+    "jevCalls": 8,
+    "costUsdEstimate": 0.002104,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 6,
+     "T2_llm": 2
+    },
+    "impossibleReported": false,
+    "visitId": "bfb66bbd-eb8e-45c6-a454-1eec2990b19f"
+   }
+  },
+  {
+   "goalId": "g027_find_ok_913ecb",
+   "kind": "find",
+   "text": "find the camp sandal prodcut page",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 2960,
+    "steps": 2,
+    "llmCalls": 2,
+    "tokens": {
+     "prompt": 1503,
+     "completion": 98
+    },
+    "costUsd": 0.000572,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 17,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1290
+     },
+     {
+      "action": "done",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1219
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 1327,
+    "steps": 1,
+    "llmCalls": 0,
+    "jevCalls": 2,
+    "costUsdEstimate": 0.000126,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 2
+    },
+    "impossibleReported": false,
+    "visitId": "3efde925-1575-44ab-9ef4-e84bf8e16fb4"
+   }
+  },
+  {
+   "goalId": "g029_find_ok_ced655",
+   "kind": "find",
+   "text": "open Wool Hiking Socks",
+   "possible": true,
+   "flaw": null,
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 2544,
+    "steps": 2,
+    "llmCalls": 2,
+    "tokens": {
+     "prompt": 1476,
+     "completion": 81
+    },
+    "costUsd": 0.000531,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 20,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1152
+     },
+     {
+      "action": "done",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 942
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 2011,
+    "steps": 1,
+    "llmCalls": 1,
+    "jevCalls": 2,
+    "costUsdEstimate": 0.000926,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 1,
+     "T2_llm": 1
+    },
+    "impossibleReported": false,
+    "visitId": "237b9708-2abe-491d-9034-6fd94b2069c9"
+   }
+  },
+  {
+   "goalId": "g031_add_to_cart_a_69c2af",
+   "kind": "add_to_cart",
+   "text": "add teh trail runner sz 10 to my cart pls",
+   "possible": false,
+   "flaw": "A",
+   "baseline": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "INCOMPLETE",
+    "ms": 4055,
+    "steps": 3,
+    "llmCalls": 3,
+    "tokens": {
+     "prompt": 2107,
+     "completion": 156
+    },
+    "costUsd": 0.000839,
+    "costMeasured": true,
+    "stoppedBecause": "impossible",
+    "done": false,
+    "impossibleReported": true,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1017
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "10",
+      "result": "ok",
+      "llmMs": 1141
+     },
+     {
+      "action": "impossible",
+      "ref": 8,
+      "value": "10",
+      "result": "ok",
+      "llmMs": 1024
+     }
+    ]
+   },
+   "doorman": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "INCOMPLETE",
+    "ms": 1029,
+    "steps": 1,
+    "llmCalls": 0,
+    "jevCalls": 2,
+    "costUsdEstimate": 0.000126,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 2
+    },
+    "impossibleReported": true,
+    "visitId": "1c4fec79-f470-4c2d-9d94-21e070b80d98"
+   }
+  },
+  {
+   "goalId": "g035_add_to_cart_a_16e44c",
+   "kind": "add_to_cart",
+   "text": "Next up: add teh trail runner sz 10 to my cart pls",
+   "possible": false,
+   "flaw": "A",
+   "baseline": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "INCOMPLETE",
+    "ms": 2249,
+    "steps": 2,
+    "llmCalls": 2,
+    "tokens": {
+     "prompt": 1519,
+     "completion": 89
+    },
+    "costUsd": 0.000558,
+    "costMeasured": true,
+    "stoppedBecause": "impossible",
+    "done": false,
+    "impossibleReported": true,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 955
+     },
+     {
+      "action": "impossible",
+      "ref": 8,
+      "value": "",
+      "result": "ok",
+      "llmMs": 853
+     }
+    ]
+   },
+   "doorman": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "INCOMPLETE",
+    "ms": 1099,
+    "steps": 1,
+    "llmCalls": 0,
+    "jevCalls": 2,
+    "costUsdEstimate": 0.000126,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 2
+    },
+    "impossibleReported": true,
+    "visitId": "cc8e4116-036b-481c-a9de-d5458a0962e9"
+   }
+  },
+  {
+   "goalId": "g037_place_order_b_0ad931",
+   "kind": "place_order",
+   "text": "order Road Racer size 9, ship to 94111",
+   "possible": false,
+   "flaw": "B",
+   "baseline": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "INCOMPLETE",
+    "ms": 18941,
+    "steps": 12,
+    "llmCalls": 12,
+    "tokens": {
+     "prompt": 7897,
+     "completion": 668
+    },
+    "costUsd": 0.00331,
+    "costMeasured": true,
+    "stoppedBecause": "max_steps",
+    "done": false,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 11,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1015
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "9",
+      "result": "ok",
+      "llmMs": 1057
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1121
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 953
+     },
+     {
+      "action": "click",
+      "ref": 8,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1398
+     },
+     {
+      "action": "fill",
+      "ref": 7,
+      "value": "Alex Runner",
+      "result": "ok",
+      "llmMs": 1237
+     },
+     {
+      "action": "fill",
+      "ref": 9,
+      "value": "94111",
+      "result": "ok",
+      "llmMs": 1282
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1290
+     },
+     {
+      "action": "fill",
+      "ref": 8,
+      "value": "123 Market St",
+      "result": "ok",
+      "llmMs": 1175
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1035
+     },
+     {
+      "action": "click",
+      "ref": 8,
+      "value": "",
+      "result": "ok",
+      "llmMs": 989
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1277
+     }
+    ]
+   },
+   "doorman": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "INCOMPLETE",
+    "ms": 5478,
+    "steps": 6,
+    "llmCalls": 2,
+    "jevCalls": 7,
+    "costUsdEstimate": 0.002041,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 5,
+     "T2_llm": 2
+    },
+    "impossibleReported": false,
+    "visitId": "0bb2964e-fe58-498b-a395-3544b1893706"
+   }
+  },
+  {
+   "goalId": "g039_place_order_b_87b695",
+   "kind": "place_order",
+   "text": "buy the canvas sneaker (size 9) and chekout, zip 98101, name sam trail, 1 ferry bldg",
+   "possible": false,
+   "flaw": "B",
+   "baseline": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "VALIDATION_ERROR",
+    "ms": 18123,
+    "steps": 12,
+    "llmCalls": 12,
+    "tokens": {
+     "prompt": 8225,
+     "completion": 595
+    },
+    "costUsd": 0.003246,
+    "costMeasured": true,
+    "stoppedBecause": "max_steps",
+    "done": false,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 15,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1000
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "9",
+      "result": "ok",
+      "llmMs": 959
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 956
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 988
+     },
+     {
+      "action": "click",
+      "ref": 8,
+      "value": "",
+      "result": "ok",
+      "llmMs": 950
+     },
+     {
+      "action": "fill",
+      "ref": 7,
+      "value": "sam trail",
+      "result": "ok",
+      "llmMs": 1325
+     },
+     {
+      "action": "fill",
+      "ref": 8,
+      "value": "1 Ferry Bldg",
+      "result": "ok",
+      "llmMs": 1180
+     },
+     {
+      "action": "fill",
+      "ref": 9,
+      "value": "98101",
+      "result": "ok",
+      "llmMs": 1069
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1044
+     },
+     {
+      "action": "fill",
+      "ref": 9,
+      "value": "98101-0000",
+      "result": "ok",
+      "llmMs": 1293
+     },
+     {
+      "action": "fill",
+      "ref": 9,
+      "value": "98101",
+      "result": "ok",
+      "llmMs": 1011
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1206
+     }
+    ]
+   },
+   "doorman": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "VALIDATION_ERROR",
+    "ms": 7143,
+    "steps": 8,
+    "llmCalls": 2,
+    "jevCalls": 8,
+    "costUsdEstimate": 0.002104,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 6,
+     "T2_llm": 2
+    },
+    "impossibleReported": false,
+    "visitId": "869c18e3-1c3c-47fe-8beb-27c970fcdf39"
+   }
+  },
+  {
+   "goalId": "g042_place_order_b_a65158",
+   "kind": "place_order",
+   "text": "I'd love to order the Wool Hiking Socks in size M — can you check out for me? Ship it to ZIP 97201, my name is Sam Trail, 1 Ferry Building.",
+   "possible": false,
+   "flaw": "B",
+   "baseline": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "VALIDATION_ERROR",
+    "ms": 17824,
+    "steps": 12,
+    "llmCalls": 12,
+    "tokens": {
+     "prompt": 8219,
+     "completion": 623
+    },
+    "costUsd": 0.003301,
+    "costMeasured": true,
+    "stoppedBecause": "max_steps",
+    "done": false,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 20,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1183
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "M",
+      "result": "ok",
+      "llmMs": 901
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 931
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 944
+     },
+     {
+      "action": "click",
+      "ref": 8,
+      "value": "",
+      "result": "ok",
+      "llmMs": 998
+     },
+     {
+      "action": "fill",
+      "ref": 7,
+      "value": "Sam Trail",
+      "result": "ok",
+      "llmMs": 885
+     },
+     {
+      "action": "fill",
+      "ref": 8,
+      "value": "1 Ferry Building",
+      "result": "ok",
+      "llmMs": 904
+     },
+     {
+      "action": "fill",
+      "ref": 9,
+      "value": "97201",
+      "result": "ok",
+      "llmMs": 1134
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1041
+     },
+     {
+      "action": "fill",
+      "ref": 9,
+      "value": "97201",
+      "result": "ok",
+      "llmMs": 1185
+     },
+     {
+      "action": "fill",
+      "ref": 9,
+      "value": "97201",
+      "result": "ok",
+      "llmMs": 1323
+     },
+     {
+      "action": "fill",
+      "ref": 9,
+      "value": "97201-0001",
+      "result": "ok",
+      "llmMs": 1304
+     }
+    ]
+   },
+   "doorman": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "VALIDATION_ERROR",
+    "ms": 5869,
+    "steps": 8,
+    "llmCalls": 2,
+    "jevCalls": 8,
+    "costUsdEstimate": 0.002104,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 6,
+     "T2_llm": 2
+    },
+    "impossibleReported": false,
+    "visitId": "3a79cf49-88cd-4583-9819-ab80dc734f20"
+   }
+  },
+  {
+   "goalId": "g045_view_order_c_cea62c",
+   "kind": "view_order",
+   "text": "order 1042 status",
+   "possible": true,
+   "flaw": "C",
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 9294,
+    "steps": 6,
+    "llmCalls": 6,
+    "tokens": {
+     "prompt": 3655,
+     "completion": 342
+    },
+    "costUsd": 0.001598,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 5,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1292
+     },
+     {
+      "action": "click",
+      "ref": 7,
+      "value": "",
+      "result": "ok",
+      "llmMs": 883
+     },
+     {
+      "action": "fill",
+      "ref": 7,
+      "value": "user@example.com",
+      "result": "ok",
+      "llmMs": 1176
+     },
+     {
+      "action": "click",
+      "ref": 8,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1419
+     },
+     {
+      "action": "click",
+      "ref": 7,
+      "value": "",
+      "result": "ok",
+      "llmMs": 944
+     },
+     {
+      "action": "done",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1412
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 5584,
+    "steps": 5,
+    "llmCalls": 2,
+    "jevCalls": 6,
+    "costUsdEstimate": 0.001978,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 4,
+     "T2_llm": 2
+    },
+    "impossibleReported": false,
+    "visitId": "63834ded-9a38-49e4-a7e1-9504711ed892"
+   }
+  },
+  {
+   "goalId": "g047_view_order_c_dfebca",
+   "kind": "view_order",
+   "text": "Next up: wheres my ordr 1042? email is sam@example.com",
+   "possible": true,
+   "flaw": "C",
+   "baseline": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 9370,
+    "steps": 6,
+    "llmCalls": 6,
+    "tokens": {
+     "prompt": 3727,
+     "completion": 292
+    },
+    "costUsd": 0.001516,
+    "costMeasured": true,
+    "stoppedBecause": "done",
+    "done": true,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 5,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1573
+     },
+     {
+      "action": "click",
+      "ref": 7,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1282
+     },
+     {
+      "action": "fill",
+      "ref": 7,
+      "value": "sam@example.com",
+      "result": "ok",
+      "llmMs": 967
+     },
+     {
+      "action": "click",
+      "ref": 8,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1208
+     },
+     {
+      "action": "click",
+      "ref": 7,
+      "value": "",
+      "result": "ok",
+      "llmMs": 927
+     },
+     {
+      "action": "done",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1240
+     }
+    ]
+   },
+   "doorman": {
+    "success": true,
+    "failureKind": null,
+    "reason": null,
+    "ms": 5570,
+    "steps": 5,
+    "llmCalls": 3,
+    "jevCalls": 6,
+    "costUsdEstimate": 0.002778,
+    "costEstimated": true,
+    "tierCounts": {
+     "T1_jev": 3,
+     "T2_llm": 3
+    },
+    "impossibleReported": false,
+    "visitId": "207947d5-5734-4979-b154-9cfde062ad7f"
+   }
+  },
+  {
+   "goalId": "g049_impossible_d_1e359a",
+   "kind": "impossible",
+   "text": "kids trail running shoes",
+   "possible": false,
+   "flaw": "D",
+   "baseline": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "NOT_FOUND",
+    "ms": 18431,
+    "steps": 12,
+    "llmCalls": 12,
+    "tokens": {
+     "prompt": 9413,
+     "completion": 708
+    },
+    "costUsd": 0.003769,
+    "costMeasured": true,
+    "stoppedBecause": "max_steps",
+    "done": false,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "select",
+      "ref": 7,
+      "value": "shoes",
+      "result": "ok",
+      "llmMs": 1058
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1090
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "9",
+      "result": "ok",
+      "llmMs": 1119
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1042
+     },
+     {
+      "action": "fill",
+      "ref": 2,
+      "value": "kids trail running shoes",
+      "result": "ok",
+      "llmMs": 1162
+     },
+     {
+      "action": "click",
+      "ref": 7,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1281
+     },
+     {
+      "action": "click",
+      "ref": 3,
+      "value": "",
+      "result": "ok",
+      "llmMs": 997
+     },
+     {
+      "action": "fill",
+      "ref": 2,
+      "value": "trail running shoes",
+      "result": "ok",
+      "llmMs": 999
+     },
+     {
+      "action": "fill",
+      "ref": 2,
+      "value": "kids shoes",
+      "result": "ok",
+      "llmMs": 1163
+     },
+     {
+      "action": "fill",
+      "ref": 2,
+      "value": "trail runner",
+      "result": "ok",
+      "llmMs": 1032
+     },
+     {
+      "action": "fill",
+      "ref": 2,
+      "value": "kids shoes",
+      "result": "ok",
+      "llmMs": 1224
+     },
+     {
+      "action": "select",
+      "ref": 7,
+      "value": "shoes",
+      "result": "ok",
+      "llmMs": 1144
+     }
+    ]
+   },
+   "doorman": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "NOT_FOUND",
+    "ms": 9666,
+    "steps": 8,
+    "llmCalls": 5,
+    "jevCalls": 8,
+    "costUsdEstimate": 0.004504,
+    "costEstimated": true,
+    "tierCounts": {
+     "T2_llm": 5,
+     "T1_jev": 3
+    },
+    "impossibleReported": false,
+    "visitId": "a38e04d1-b1ed-466a-9896-1dfb2ac45a8e"
+   }
+  },
+  {
+   "goalId": "g053_impossible_d_b78586",
+   "kind": "impossible",
+   "text": "vegan leather-free boots",
+   "possible": false,
+   "flaw": "D",
+   "baseline": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "NOT_FOUND",
+    "ms": 18910,
+    "steps": 12,
+    "llmCalls": 12,
+    "tokens": {
+     "prompt": 9355,
+     "completion": 728
+    },
+    "costUsd": 0.003795,
+    "costMeasured": true,
+    "stoppedBecause": "max_steps",
+    "done": false,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 13,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1598
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "9",
+      "result": "ok",
+      "llmMs": 1102
+     },
+     {
+      "action": "fill",
+      "ref": 2,
+      "value": "vegan boots",
+      "result": "ok",
+      "llmMs": 1022
+     },
+     {
+      "action": "click",
+      "ref": 3,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1020
+     },
+     {
+      "action": "select",
+      "ref": 7,
+      "value": "boots",
+      "result": "ok",
+      "llmMs": 1097
+     },
+     {
+      "action": "select",
+      "ref": 7,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1143
+     },
+     {
+      "action": "click",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1174
+     },
+     {
+      "action": "click",
+      "ref": 14,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1367
+     },
+     {
+      "action": "click",
+      "ref": 7,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1004
+     },
+     {
+      "action": "click",
+      "ref": 13,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1073
+     },
+     {
+      "action": "fill",
+      "ref": 2,
+      "value": "vegan",
+      "result": "ok",
+      "llmMs": 1037
+     },
+     {
+      "action": "fill",
+      "ref": 2,
+      "value": "vegan boots",
+      "result": "ok",
+      "llmMs": 1181
+     }
+    ]
+   },
+   "doorman": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "NOT_FOUND",
+    "ms": 9026,
+    "steps": 8,
+    "llmCalls": 5,
+    "jevCalls": 8,
+    "costUsdEstimate": 0.004504,
+    "costEstimated": true,
+    "tierCounts": {
+     "T2_llm": 5,
+     "T1_jev": 3
+    },
+    "impossibleReported": false,
+    "visitId": "bd931519-0b6b-40be-80c9-6acecb4669f8"
+   }
+  },
+  {
+   "goalId": "g054_impossible_d_3810c8",
+   "kind": "impossible",
+   "text": "Hey, I'm looking for children's rain boots — can you sort that out on this site?",
+   "possible": false,
+   "flaw": "D",
+   "baseline": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "NOT_FOUND",
+    "ms": 19437,
+    "steps": 12,
+    "llmCalls": 12,
+    "tokens": {
+     "prompt": 9279,
+     "completion": 810
+    },
+    "costUsd": 0.00394,
+    "costMeasured": true,
+    "stoppedBecause": "max_steps",
+    "done": false,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "select",
+      "ref": 7,
+      "value": "boots",
+      "result": "ok",
+      "llmMs": 1102
+     },
+     {
+      "action": "click",
+      "ref": 11,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1022
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "7",
+      "result": "ok",
+      "llmMs": 1046
+     },
+     {
+      "action": "click",
+      "ref": 10,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1010
+     },
+     {
+      "action": "fill",
+      "ref": 2,
+      "value": "kids rain boots",
+      "result": "ok",
+      "llmMs": 1556
+     },
+     {
+      "action": "click",
+      "ref": 4,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1483
+     },
+     {
+      "action": "click",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 968
+     },
+     {
+      "action": "click",
+      "ref": 14,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1238
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "7",
+      "result": "ok",
+      "llmMs": 1550
+     },
+     {
+      "action": "click",
+      "ref": 7,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1232
+     },
+     {
+      "action": "click",
+      "ref": 14,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1088
+     },
+     {
+      "action": "select",
+      "ref": 8,
+      "value": "7",
+      "result": "ok",
+      "llmMs": 982
+     }
+    ]
+   },
+   "doorman": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "NOT_FOUND",
+    "ms": 9360,
+    "steps": 8,
+    "llmCalls": 6,
+    "jevCalls": 8,
+    "costUsdEstimate": 0.005304,
+    "costEstimated": true,
+    "tierCounts": {
+     "T2_llm": 6,
+     "T1_jev": 2
+    },
+    "impossibleReported": false,
+    "visitId": "82bcbcf8-5e60-40ec-9469-95e7dd0af2d2"
+   }
+  },
+  {
+   "goalId": "g055_impossible_ok_e02630",
+   "kind": "impossible",
+   "text": "do u have gift wrapping for an order? wnat that",
+   "possible": false,
+   "flaw": null,
+   "baseline": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "NOT_FOUND",
+    "ms": 19017,
+    "steps": 12,
+    "llmCalls": 12,
+    "tokens": {
+     "prompt": 8561,
+     "completion": 838
+    },
+    "costUsd": 0.003816,
+    "costMeasured": true,
+    "stoppedBecause": "max_steps",
+    "done": false,
+    "impossibleReported": false,
+    "actions": [
+     {
+      "action": "click",
+      "ref": 6,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1053
+     },
+     {
+      "action": "click",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1247
+     },
+     {
+      "action": "click",
+      "ref": 6,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1128
+     },
+     {
+      "action": "fill",
+      "ref": 2,
+      "value": "gift wrap",
+      "result": "ok",
+      "llmMs": 1265
+     },
+     {
+      "action": "click",
+      "ref": 3,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1371
+     },
+     {
+      "action": "click",
+      "ref": 6,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1084
+     },
+     {
+      "action": "click",
+      "ref": 1,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1633
+     },
+     {
+      "action": "click",
+      "ref": 6,
+      "value": "",
+      "result": "ok",
+      "llmMs": 994
+     },
+     {
+      "action": "click",
+      "ref": 5,
+      "value": "",
+      "result": "ok",
+      "llmMs": 1203
+     },
+     {
+      "action": "click",
+      "ref": 6,
+      "value": "",
+      "result": "ok",
+      "llmMs": 987
+     },
+     {
+      "action": "click",
+      "ref": 3,
+      "value": "",
+      "result": "ok",
+      "llmMs": 980
+     },
+     {
+      "action": "click",
+      "ref": 6,
+      "value": "",
+      "result": "ok",
+      "llmMs": 875
+     }
+    ]
+   },
+   "doorman": {
+    "success": false,
+    "failureKind": "impossible",
+    "reason": "NOT_FOUND",
+    "ms": 14097,
+    "steps": 8,
+    "llmCalls": 8,
+    "jevCalls": 8,
+    "costUsdEstimate": 0.006904,
+    "costEstimated": true,
+    "tierCounts": {
+     "T2_llm": 8
+    },
+    "impossibleReported": false,
+    "visitId": "75b0b72c-2927-4abd-8f5d-ee5208289490"
+   }
+  }
+ ],
+ "aggregate": {
+  "n": 23,
+  "baseline": {
+   "successRate": 0.609,
+   "medianMs": 7971,
+   "meanMs": 10636,
+   "meanSteps": 7,
+   "totalLlmCalls": 161,
+   "totalCostUsd": 0.0453,
+   "successPossible": 1,
+   "impossibleHandled": 0
+  },
+  "doorman": {
+   "successRate": 0.565,
+   "medianMs": 4924,
+   "meanMs": 5101,
+   "meanSteps": 4.565,
+   "totalLlmCalls": 39,
+   "totalCostUsd": 0.038319,
+   "successPossible": 0.929,
+   "impossibleHandled": 0,
+   "totalJevCalls": 113
+  }
+ }
+}

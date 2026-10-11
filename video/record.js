@@ -16,11 +16,12 @@ const args = process.argv.slice(2);
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const BASE = arg('--base', 'https://doorman-trailhead.fly.dev').replace(/\/$/, '');
 const OUT = path.join(__dirname, 'raw');
+const ONLY = arg('--only', '') ? arg('--only').split(',') : null; // re-record a subset; others are kept in scenes.json
 fs.mkdirSync(OUT, { recursive: true });
 const W = 1920, H = 1080;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const scenes = [];
+const scenes = (() => { try { return ONLY ? JSON.parse(fs.readFileSync(path.join(OUT, 'scenes.json'), 'utf8')).scenes.filter((x) => !ONLY.includes(x.name)) : []; } catch { return []; } })();
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
 // A visible cursor + click ripple, injected into every page so Playwright's mouse shows up in the recording.
@@ -38,6 +39,7 @@ const CURSOR_JS = `(() => {
   window.addEventListener('mousedown', (e) => { rip.style.left = e.clientX + 'px'; rip.style.top = e.clientY + 'px'; rip.style.animation = 'none'; void rip.offsetWidth; rip.style.animation = '__dmr .5s ease-out'; }, true);
 })();`;
 
+const want = (name) => !ONLY || ONLY.includes(name);
 async function newScene(browser, name) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, recordVideo: { dir: OUT, size: { width: W, height: H } }, colorScheme: 'dark', locale: 'en-US', timezoneId: 'America/Los_Angeles' });
   await ctx.addInitScript(CURSOR_JS);
@@ -54,7 +56,7 @@ async function newScene(browser, name) {
     const dest = path.join(OUT, `${name}.webm`);
     fs.renameSync(file, dest);
     scene.file = path.basename(dest);
-    scenes.push(scene);
+    scenes.push(scene); scenes.sort((a, b) => a.name.localeCompare(b.name));
     fs.writeFileSync(path.join(OUT, 'scenes.json'), JSON.stringify({ base: BASE, recordedAt: new Date().toISOString(), scenes }, null, 2));
     log(name, 'saved', scene.file, scene.durationS.toFixed(1) + 's');
   };
@@ -96,7 +98,7 @@ async function clearShopState(page) { await page.evaluate(() => { for (const k o
   const browser = await chromium.launch({ headless: true, args: ['--disable-infobars', '--hide-scrollbars', '--force-device-scale-factor=1'] });
 
   // ── scene 1: the site, as a human sees it ─────────────────────────────────────────
-  {
+  if (want('01-shop')) {
     const s = await newScene(browser, '01-shop');
     await s.page.goto(BASE + '/shop/', { waitUntil: 'networkidle' });
     await s.page.waitForSelector('#doorman-hud');
@@ -109,7 +111,7 @@ async function clearShopState(page) { await page.evaluate(() => { for (const k o
   }
 
   // ── scene 2: a vague goal, delegated in natural language (may fail — recorded as it happens) ──
-  {
+  if (want('02-vague-goal')) {
     const s = await newScene(browser, '02-vague-goal');
     await s.page.goto(BASE + '/shop/', { waitUntil: 'networkidle' });
     await clearShopState(s.page);
@@ -122,7 +124,7 @@ async function clearShopState(page) { await page.evaluate(() => { for (const k o
   }
 
   // ── scene 3: a specific goal (fresh cart) ─────────────────────────────────────────
-  {
+  if (want('03-specific-goal')) {
     const s = await newScene(browser, '03-specific-goal');
     await s.page.goto(BASE + '/shop/', { waitUntil: 'networkidle' });
     await clearShopState(s.page);
@@ -138,7 +140,7 @@ async function clearShopState(page) { await page.evaluate(() => { for (const k o
   }
 
   // ── scene 4: the same goal again on a fresh cart — does memory (recipe) kick in? ───
-  {
+  if (want('04-memory')) {
     const s = await newScene(browser, '04-memory');
     await s.page.goto(BASE + '/shop/', { waitUntil: 'networkidle' });
     await clearShopState(s.page);
@@ -151,7 +153,7 @@ async function clearShopState(page) { await page.evaluate(() => { for (const k o
   }
 
   // ── scene 5: owner analytics ──────────────────────────────────────────────────────
-  {
+  if (want('05-dashboard')) {
     const s = await newScene(browser, '05-dashboard');
     await s.page.goto(BASE + '/dashboard/', { waitUntil: 'networkidle' });
     await s.page.waitForSelector('.tile');
@@ -168,7 +170,7 @@ async function clearShopState(page) { await page.evaluate(() => { for (const k o
   }
 
   // ── scene 6: harness evolution ────────────────────────────────────────────────────
-  {
+  if (want('06-evolution')) {
     const s = await newScene(browser, '06-evolution');
     await s.page.goto(BASE + '/evolution/', { waitUntil: 'networkidle' });
     await sleep(1500); s.mark('loaded');

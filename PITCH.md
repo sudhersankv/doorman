@@ -1,61 +1,63 @@
-# Doorman — Pitch & Q&A (v2). Fill [N] from `/evolution` after B5. Never say an unmeasured number.
+# doorman — pitch & Q&A (final). Every number below is measured and has a file behind it.
+
+## What it is, in one breath
+A handoff layer at a website's door. One script tag maps the page into **tools** and exposes them to visiting AI
+agents three ways (WebMCP `document.modelContext`, a `/.well-known/doorman.json` manifest, `window.doorman`). The
+agent decides: call a tool directly with zero inference, or hand off a goal in plain language and let the harness
+drive — one Jev decision per step in a few hundred milliseconds, LLM only as a fallback. Everything — maps,
+visits, steps, recipes, benchmarks, harness versions — lives in MongoDB Atlas, and the owner gets intent analytics
+out of it. On top sits the optional recursive loop: the harness edits its own config, tests it on held-out goals,
+and keeps only what measures better.
 
 ## 30 seconds
-AI agents are visiting websites and failing: on real sites the best ones complete about 60% of tasks, and they
-take minutes to do it. Doorman is a self-improving harness at the website's door. One script tag. It maps the
-site into tools, a System 1 model makes each decision in about 400 ms, and every visit is remembered in Atlas.
-Then it rewrites itself: after each batch of visits it edits its own tools, context, guardrails and rules, tests
-the new version on held-out goals, and keeps only what works. Over [N] generations, success on possible goals
-went from [N]% to [N]% and the harness learned [example rule] on its own.
+AI agents visiting websites re-read the page on every step and call an LLM every time, and the site owner never
+learns what they wanted. doorman is a script tag that turns the page into tools, lets an agent call them directly or
+hand off a goal, remembers every visit in Atlas, and shows the owner the intent. Same goal, same fresh cart, live:
+an ordinary LLM browser agent took 6.1 s and 4 LLM calls; doorman took 1.6 s and zero. Across 23 held-out goals
+doorman made 4× fewer LLM calls at 1.6× the speed. And it tries to improve itself — honestly: every candidate it
+proposed today was benchmarked and rolled back, and that record is in the database.
+
+## Measured numbers (sources in brackets)
+- **Live A/B, one goal** [`video/raw/ab.json`]: ordinary LLM agent reached the goal in 6.1 s, 4 steps, 4 LLM calls,
+  $0.0010 measured; doorman reached it in 1.6 s, 3 steps, 0 LLM calls, 4 Jev calls, ~$0.0003 estimated.
+- **Matched benchmark, 23 held-out goals, both agents** [`data/compare.json`, Atlas `comparisons`]: possible goals
+  reached — baseline 100% (14/14), doorman 93% (13/14); median 8.0 s vs 4.9 s; mean steps 7.0 vs 4.6; LLM calls
+  161 vs 39; cost $0.045 measured vs $0.038 estimated. **Neither agent declines the 9 impossible goals** (0% / 0%):
+  both loop to their step limit. That is the first thing to fix.
+- **Owner analytics** [`/api/analytics`, Atlas `visits`]: 51 visits at recording time, 64% of decided visits
+  succeeded, median 2.4 s, Jev decided 64% of steps, LLM 32%, recipes 4%.
+- **External-agent test** [`docs/EXTERNAL-AGENT-TEST.md`]: with no hint, Claude's browser agent bypassed doorman
+  and used the DOM; told to look for capabilities, it found `window.doorman` and delegated — one vague goal failed,
+  one specific goal succeeded. WebMCP-native discovery could not be tested (no browser exposes it yet).
+- **Recursive evolution** [`/evolution`, Atlas `harness_configs`]: see the final table in README.md. Rolled-back
+  versions are kept as evidence.
 
 ## 3 minutes (judging round)
-1. **Problem (20 s).** Agents fail possible tasks and waste minutes on impossible ones; sites see "clicked checkout, left."
-2. **Live (60 s).** `doorman.do("buy running shoes under $80")` → steps + ms counter. Then a *reworded* goal →
-   `tier: recipe`, faster. "Each decision is one Jev call; the harness config in Atlas tells it what to see and when to stop."
-3. **It rewrites itself (60 s).** `/evolution`: v1→v4. Point at one kept edit ("added: select size before add to cart")
-   and one rolled-back edit. "An LLM proposes, code validates, held-out goals decide. Guardrails can only get stricter."
-4. **Numbers (30 s).** Success on possible goals [N]→[N]%; impossible goals answered 'no' in [N] s; LLM fallback [N]→[N]%.
-5. **Honesty + next (10 s).** Simulated agents, mock shop, best case. Next: real site traffic, Agent Engine procedural memory.
+1. **Problem (20 s).** Agents re-read the page every step; owners see nothing.
+2. **The handoff layer (40 s).** `/shop/` → HUD → *tools*: 35 tools exposed from this page, discovery paths listed.
+   Call `size(9)` and `add_to_cart()` directly: zero inference, cart verified. Then hand off a goal: three Jev steps, 1.5 s.
+3. **A/B (40 s).** The split-screen: same goal, fresh cart, ordinary LLM agent vs doorman, live timers. Then the
+   23-goal table — including the row where both score 0%.
+4. **Memory + analytics (30 s).** `/dashboard/`: what agents asked for, where the site stopped them, what to fix first.
+5. **Recursive evolution (40 s).** `/evolution/`: editor proposes a JSON patch, code validates, held-out goals decide.
+   Today's verdicts. "It measured, and refused to keep what didn't help."
+6. **Honesty + next (10 s).** Mock shop, simulated plus one real external agent, best case. Next: decline impossible
+   goals, WebMCP-native agents, real traffic.
 
 ## Judge angles
-- **MongoDB (Steffan):** config versions with parent links, recipes + visits + vectors in one DB, memory-type mapping, sandbox cluster.
-- **Raindrop (Jackson):** this *is* recursive self-improvement with evidence: patch, verdict, rollback, held-out. Jev classifies failures ~400 ms like Raindrop's signals.
-- **AWS (Bosco):** cost/goal, latency, stateless API, one service for all sites.
-- **Modelence (Aram):** one tag to install, plain Node, no framework.
+- **MongoDB:** six collections, one database: `site_maps`, `visits`, `recipes` (Vector Search, voyage-4-lite),
+  `runs`, `harness_configs` (versioned, parent links), `comparisons`. Sandbox cluster.
+- **Raindrop / recursive self-improvement:** real loop, real verdicts, rollbacks stored, a regression test that
+  proves candidates are actually executed (`test/e2e/version-selection.test.js`).
+- **Typesafe / Jev:** one typed decision per step, calibrated confidence gates the LLM fallback.
+- **Generic by construction:** no site vocabulary in `doorman.js`, `src/harness/`, `src/lib/`; a clinic fixture runs unchanged.
 
-## Q&A
-**"What exactly evolves?"** Tools (exposed/description/preconditions), context policy (fields, history), guardrails
-(confirm list, max steps, threshold), rules and recipes. All in one versioned config document.
-**"How does it rewrite itself?"** The harness's behavior is data in Atlas. An editor LLM reads the worst traces and
-proposes ≤3 JSON edits; code validates paths and bounds; the new version runs on held-out goals; kept or rolled back.
-**"Can it make itself unsafe?"** No. Confirm list is append-only in code, checkout can never be removed, thresholds
-are bounded, and the LLM never executes anything — it only proposes a patch.
-**"Isn't this prompt tuning?"** It also changes tool access, context and guardrails, every change is measured on
-goals it didn't see, and rollbacks are stored as evidence.
-**"Is a dashboard the main feature?"** No — the harness and its loop are. `/evolution` is a 10-second evidence page.
-**"Why Jev / System 1?"** Map → closed menu → classification. ~400 ms, calibrated confidence we threshold on. Fallback rate is measured.
-**"WebMCP?"** We expose `window.doorman` + manifest today; register `document.modelContext` tools where supported.
-**"Stagehand caching?"** Per-agent, agent-side. Ours is per-site, shared, owner-governed, self-improving.
-**"Real traffic?"** No — simulated LLM agents on a mock shop with planted flaws (an answer key). Say so first.
-**"What's new today?"** Everything in the repo. Setup scripts and keys from last night are not the product.
-**"Why MongoDB not Postgres?"** Nested per-site config, version chains, vectors next to data, one DB.
-**"Business?"** Free script, paid insight for owners; later a no-install agent-side version.
-
-## Numbers (final run, corrected evaluation; real Jev; held-out = 23 goals: 14 possible, 9 impossible)
-| Metric | v1 seed (cold, with recipes off) | v1 warm (recipes on) | candidates v2–v4 |
-|---|---|---|---|
-| Success on possible goals | **93%** (13/14) | 86–93% run to run | 86% each → all rolled back |
-| Median time per goal | 3.0–4.0 s | **2.4–2.8 s** | 3.4–6.2 s |
-| Steps decided by the LLM | 28–29% | ~30% | 17% (v2, threshold 0.65) · 35% · 34% |
-| Impossible goals refused fast | 22% | 22% | 22–33% |
-| Recipe hits (held-out, warm) | — | 13–17% | — |
-| Generations | 3 | | 0 kept, 3 rolled back, $0.004 of LLM |
-
-**What the editor proposed and why each was rejected on unseen goals:**
-- v2: tool descriptions + a ZIP precondition + Jev threshold 0.70→0.65. LLM steps fell 29%→17% (the candidate really ran), but one more goal failed. Rolled back.
-- v3: instruction rewrite + a no-repeat rule + `checkout` added to confirm. Same success, slower. Rolled back.
-- v4: search description/precondition + an address-validation rule. One more goal failed, much slower. Rolled back.
-
-**The bug we caught, and say out loud:** our first evolution runs "kept" versions by noise: candidates were stored inactive and the decision endpoint always loaded the active config, so every candidate was measured as the old one. A reviewer flagged it; we traced it, threaded the version end to end, added a regression test that two stored versions decide differently, disabled recipe memory during held-out comparisons so configs are compared on equal footing, and re-ran. The corrected loop rejected all three. We'd rather show a loop that says no correctly than one that says yes by accident.
-
-**Three honest lines:** simulated agents on our own shop · the seed config was already near the ceiling (13/14; the 14th is a multi-page sign-in flow) · two planted flaws (no-results search, ZIP bug) still aren't refused fast; `impossibleThreshold` is in the editor's reach but it didn't find it in three generations.
+## Likely questions
+- *Why not just WebMCP?* We register with it when present; no shipping browser exposes it yet, so the manifest and
+  page object are the discovery paths that work today.
+- *Isn't the baseline weak?* It is a competent generic agent (100% on possible goals). doorman wins on speed and LLM
+  calls, not on success rate — and we say so.
+- *Did evolution improve anything?* Not today. The loop ran for real; the seed held. We show that as regression
+  protection, because a loop that only ever "improves" is the one to distrust.
+- *Cost numbers?* Baseline cost is measured from token usage. doorman's is an estimate from step counts, labelled
+  as such everywhere it appears.

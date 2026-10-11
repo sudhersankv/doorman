@@ -500,8 +500,9 @@
   function mountHud() {
     if (!scriptEl || !scriptEl.hasAttribute('data-hud') || document.getElementById('doorman-hud')) return;
     const hud = document.createElement('div'); hud.id = 'doorman-hud'; hud.setAttribute('aria-live', 'off');
-    hud.innerHTML = '<style>#doorman-hud{position:fixed;right:12px;bottom:12px;width:min(380px,calc(100vw - 24px));z-index:2147483000;font:13px/1.4 system-ui,sans-serif;color:#e6e9ef;background:#171d28;border:1px solid #2a3242;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.35)}#doorman-hud *{box-sizing:border-box}#doorman-hud header{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #2a3242;font-weight:600}#doorman-hud header b{color:#00ed64}#doorman-hud form{display:flex;gap:6px;padding:8px 10px}#doorman-hud input{flex:1;padding:6px 8px;border:1px solid #2a3242;border-radius:6px;background:#11151d;color:#e6e9ef}#doorman-hud button{padding:6px 10px;border:0;border-radius:6px;background:#00ed64;color:#11151d;font-weight:600;cursor:pointer}#doorman-hud ol{list-style:none;margin:0;padding:4px 10px 8px;max-height:220px;overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:12px}#doorman-hud li{padding:2px 0;border-bottom:1px dashed #2a3242}#doorman-hud .t{color:#9aa4b6}#doorman-hud .ok{color:#5fbf86}#doorman-hud .bad{color:#e07070}#doorman-hud .tier{color:#00ed64}#doorman-hud footer{padding:6px 10px;color:#9aa4b6;font-size:12px}</style>' +
-      '<header><b>doorman</b><span>site: ' + siteId + '</span></header>' +
+    hud.innerHTML = '<style>#doorman-hud{position:fixed;right:12px;bottom:12px;width:min(380px,calc(100vw - 24px));z-index:2147483000;font:13px/1.4 system-ui,sans-serif;color:#e6e9ef;background:#171d28;border:1px solid #2a3242;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.35)}#doorman-hud *{box-sizing:border-box}#doorman-hud header{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #2a3242;font-weight:600}#doorman-hud header b{color:#00ed64}#doorman-hud form{display:flex;gap:6px;padding:8px 10px}#doorman-hud input{flex:1;padding:6px 8px;border:1px solid #2a3242;border-radius:6px;background:#11151d;color:#e6e9ef}#doorman-hud button{padding:6px 10px;border:0;border-radius:6px;background:#00ed64;color:#11151d;font-weight:600;cursor:pointer}#doorman-hud ol{list-style:none;margin:0;padding:4px 10px 8px;max-height:220px;overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:12px}#doorman-hud li{padding:2px 0;border-bottom:1px dashed #2a3242}#doorman-hud .t{color:#9aa4b6}#doorman-hud .ok{color:#5fbf86}#doorman-hud .bad{color:#e07070}#doorman-hud .tier{color:#00ed64}#doorman-hud footer{padding:6px 10px;color:#9aa4b6;font-size:12px}#doorman-hud header .ghost{margin-left:auto;background:transparent;color:#00ed64;border:1px solid #00684a;padding:3px 9px;font-size:12px}#doorman-hud header .ghost[aria-expanded=true]{background:#00ed64;color:#06101a}#doorman-tools{border-bottom:1px solid #2a3242}#doorman-tools .disc{padding:6px 10px;font-size:11px;color:#9aa4b6;line-height:1.5}#doorman-tools .disc b{color:#e6e9ef;font-weight:600}#doorman-tools .disc i{font-style:normal;color:#00ed64}#doorman-tool-list{list-style:none;margin:0;padding:0 10px 6px;max-height:200px;overflow:auto;font-size:12px}#doorman-tool-list li{display:flex;gap:8px;align-items:center;padding:3px 0;border-top:1px dashed #2a3242}#doorman-tool-list code{font-family:ui-monospace,Consolas,monospace;color:#5cf59a;white-space:nowrap}#doorman-tool-list span{flex:1;color:#9aa4b6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#doorman-tool-list input{width:90px;padding:2px 6px;font-size:11px}#doorman-tool-list button{padding:2px 8px;font-size:11px}</style>' +
+      '<header><b>doorman</b><span>site: ' + siteId + '</span><button type="button" id="doorman-tools-btn" class="ghost" aria-expanded="false">tools</button></header>' +
+      '<div id="doorman-tools" hidden><div class="disc" id="doorman-disc"></div><ul id="doorman-tool-list"></ul></div>' +
       '<form><input id="doorman-goal" placeholder="Goal for the visiting agent…" aria-label="Goal"><button type="submit">Go</button></form>' +
       '<ol id="doorman-steps"></ol><footer id="doorman-foot">idle</footer>';
     document.body.appendChild(hud);
@@ -516,6 +517,27 @@
       const p = st.params && Object.keys(st.params).length ? ' ' + JSON.stringify(st.params) : '';
       line((d.index + 1) + '. <b>' + (st.action || '—') + '</b>' + p + ' <span class="tier">' + tier + '</span> <span class="t">' + (typeof st.confidence === 'number' ? st.confidence.toFixed(2) : '') + (d.ms ? ' · ' + d.ms + ' ms' : '') + '</span>' + (d.record && d.record.outcome === 'error' ? ' <span class="bad">error</span>' : ''));
     });
+    const tbtn = hud.querySelector('#doorman-tools-btn'), tpanel = hud.querySelector('#doorman-tools'), tlist = hud.querySelector('#doorman-tool-list'), disc = hud.querySelector('#doorman-disc');
+    const esc = (x) => String(x == null ? '' : x).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const renderTools = () => {
+      const list = tools();
+      const mc = !!(document.modelContext && typeof document.modelContext.registerTool === 'function');
+      disc.innerHTML = '<b>' + list.length + ' tools exposed</b> from this page · discovery: <i>window.doorman</i> · <i>/.well-known/doorman.json</i> · WebMCP document.modelContext: ' + (mc ? '<i>registered</i>' : 'not in this browser') + ' · a visiting agent can call any tool directly (no inference) or hand off a goal below';
+      tlist.innerHTML = list.map((t, i) => { const req = (t.inputSchema && t.inputSchema.required) || []; return '<li><code>' + esc(t.name) + '</code><span title="' + esc(t.description) + '">' + esc(t.description) + '</span>' + (req.length ? '<input data-i="' + i + '" placeholder="' + esc(req[0]) + '">' : '') + '<button type="button" data-call="' + i + '">call</button></li>'; }).join('');
+      tlist.onclick = async (ev) => {
+        const b = ev.target.closest('button[data-call]'); if (!b) return;
+        const t = list[Number(b.dataset.call)]; const inp = tlist.querySelector('input[data-i="' + b.dataset.call + '"]');
+        const req = (t.inputSchema && t.inputSchema.required) || []; const params = {};
+        if (req.length) { const prop = t.inputSchema.properties[req[0]]; const v = inp ? inp.value : ''; params[req[0]] = prop && prop.type === 'boolean' ? v !== 'false' : v; }
+        line('<span class="tier">tool</span> <b>' + esc(t.name) + '</b> ' + (req.length ? esc(JSON.stringify(params)) : '') + ' <span class="t">called directly by the agent · no inference</span>');
+        const r = await t.execute(params);
+        line((r.outcome === 'ok' ? '<span class="ok">ok</span>' : '<span class="bad">' + esc(r.outcome || 'error') + '</span>') + ' <span class="t">' + esc((r.messages || []).map((m) => m.text || m).join(' · ') || r.error || '') + '</span>');
+        foot.textContent = 'tool call · 0 ms of inference';
+        setTimeout(renderTools, 350);
+      };
+    };
+    tbtn.addEventListener('click', () => { const open = tpanel.hidden; tpanel.hidden = !open; tbtn.setAttribute('aria-expanded', String(open)); if (open) renderTools(); });
+    window.addEventListener('hashchange', () => { if (!tpanel.hidden) setTimeout(renderTools, 400); });
     hud.querySelector('form').addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const goal = hud.querySelector('#doorman-goal').value.trim(); if (!goal) return;

@@ -1,8 +1,10 @@
-# Doorman
+# doorman
 
-**A self-improving harness at a website's door.**
+**A handoff layer at a website's door — and a self-improving harness behind it.**
 
-One script tag maps a site into tools for visiting AI agents. A System 1 model (Jev) makes each decision in a few
+One script tag maps a site into tools and exposes them to visiting AI agents (WebMCP `document.modelContext` when the
+browser has it, a `/.well-known/doorman.json` manifest, `window.doorman`). The agent decides: call a tool directly with
+zero inference, or hand off a goal in plain language. A System 1 model (Jev) makes each decision in a few
 hundred milliseconds. Every visit is remembered in MongoDB Atlas. And the harness **rewrites itself**: after a batch
 of visits it edits its own tools, context policy, guardrails and rules, tests the new version on held-out goals, and
 keeps only the changes that measurably help. Every version, patch and verdict is stored.
@@ -68,7 +70,29 @@ runs unchanged on the second fixture site (a clinic booking page, `test/fixtures
 
 Traffic is simulated (Playwright agents) on a site we built. Real sites will score lower; the next step is real agent traffic.
 
-## Results (final run, corrected evaluation, real services, held-out goals)
+
+## A/B against an ordinary LLM browser agent (measured)
+
+`src/baseline/` is a generic LLM browser agent: it reads the DOM, asks the LLM for one action per step, clicks. On the
+same site, with `doorman.js` blocked on its page. `npm run compare` runs both agents on the same goals from an identical
+fresh state and verifies both from shop state (`data/compare.json`, Atlas `comparisons`).
+
+| 23 held-out goals, live site | ordinary LLM agent | doorman |
+|---|---|---|
+| possible goals reached | 100% (14/14) | 93% (13/14) |
+| impossible goals correctly declined | 0% (0/9) | 0% (0/9) |
+| median time per goal | 8.0 s | 4.9 s |
+| mean steps | 7.0 | 4.6 |
+| LLM calls, total | 161 | 39 |
+| inference cost, total | $0.045 measured | $0.038 estimated (+113 Jev calls) |
+
+One goal, one run each, recorded side by side (`video/raw/ab.json`): baseline 6.1 s / 4 steps / 4 LLM calls / $0.0010;
+doorman 1.6 s / 3 steps / 0 LLM calls / 4 Jev calls / ~$0.0003 est. Both reached the goal.
+
+The honest rows: doorman loses one checkout, and **neither agent declines the planted impossible goals** — both loop to
+their step limit. Declining fast is the next thing to fix.
+
+## Evolution results (real services, held-out goals)
 
 | | v1 seed | v1 warm (recipes) | editor candidates v2–v4 |
 |---|---|---|---|

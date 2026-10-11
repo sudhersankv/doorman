@@ -1,31 +1,40 @@
-# Doorman — Demo (final): 60-second submission video + 3-minute live judging
+# doorman — demo video & live script (final)
 
-Everything shown is live on `http://localhost:3000` with the real services (Atlas sandbox, Jev, Voyage, Neon).
-Keep `run-server.bat` open. Numbers come from `logs/11-bench-v1.log` and `logs/12-evolve.log` of the final run.
+The submission video is produced by code from real recordings: `video/record.js` and `video/record-ab.js` capture
+the live site (`https://doorman-trailhead.fly.dev`) with an isolated 1920×1080 Playwright Chromium; `video/build.py`
+assembles it with FFmpeg. Every caption that states a number is read from `video/raw/scenes.json`,
+`video/raw/ab.json` or `data/compare.json`; `video/out/claims.json` lists each on-screen claim with its source.
+Sped-up segments carry an on-screen label. There is no voice track; the narration below can be read over it.
 
-## Submission video (60 s)
-Record 1080p (Win+G), mic on, browser zoom 125%, dark terminal hidden. Two takes, keep the better.
+Outputs: `video/out/doorman-demo.mp4` (≈2.5 min) and `video/out/doorman-demo-short.mp4` (≈1 min).
 
-| Time | Screen | Say |
-|---|---|---|
-| 0–8 s | `/shop/` with the Doorman box bottom-right | "Trailhead Outfitters: a mock shop with four planted flaws. Doorman is one script tag." (show `data-site="trailhead" data-hud` in view-source for 2 s) |
-| 8–25 s | Type `buy running shoes under $80` → Go | "A System 1 model, Jev, picks each step in a few hundred milliseconds from the site's own actions. Every decision and its confidence are right there." Then `Trail Runner size 10 to my cart` → "not possible here" in one step: "and it refuses impossible goals fast." |
-| 25–50 s | `/evolution/` | "After each batch of visits the harness rewrites itself: an LLM proposes edits to its tools, context and guardrails, code validates them, held-out goals decide. v2 was kept: 26% faster. The rest were rolled back, and they're stored as evidence." Point at one patch line. |
-| 50–60 s | README on GitHub | "Generic code, site-specific memory, everything in MongoDB Atlas. Built today." |
+## Storyboard and narration
 
-## Live judging (3 min + Q&A)
-Tabs ready: `/shop/` (HUD visible) · `/evolution/` · Atlas → `harness_configs` · GitHub README. Backup: the video on laptop and phone.
+| # | Scene | What is on screen | Narration (read over it) |
+|---|---|---|---|
+| 1 | title | doorman wordmark, one-line description | "doorman: a self-improving harness at your website's door. One script tag." |
+| 2 | problem | card | "Today an AI agent re-reads your page on every step and calls an LLM each time. Seconds per step, a call per step — and you never learn what it wanted." |
+| 3 | the site | Trailhead Outfitters, scroll | "Our test site: a mock shop with four planted flaws as the answer key." |
+| 4 | the handoff layer | HUD → tools panel, `size(9)`, `add_to_cart()` called directly | "doorman maps the page into tools and exposes them: WebMCP when the browser has it, a well-known manifest, a page object. An agent can call a tool directly — zero inference — or hand off a goal." |
+| 5 | A/B intro + split screen | ordinary LLM agent (left) vs doorman (right), live timers | "Same goal, same fresh cart. Left: an ordinary LLM browser agent reading the DOM. Right: the goal handed to doorman." |
+| 6 | A/B result card | measured table | "[read the numbers on the card]. Both verified from the shop's own state." |
+| 7 | 23-goal benchmark | aggregate table | "Across 23 held-out goals: [read]. And one honest row: neither agent declines the impossible goals yet." |
+| 8 | vague goal | HUD run, outcome as measured | "A vague goal is where it struggles: [read outcome]." |
+| 9 | specific goal | HUD run | "A specific goal: three Jev decisions, [ms]." |
+| 10 | memory | second run on a fresh cart | "Every visit is remembered in Atlas; successful paths become recipes." [read whether a recipe hit] |
+| 11 | owner analytics | dashboard scroll | "The owner's side: what agents came for, where the site stopped them, what to fix first — all from the visits collection." |
+| 12 | evolution intro | card | "Then the harness tries to improve itself: an editor LLM proposes a patch to its own config, code validates it, held-out goals decide." |
+| 13 | evolution page | version chain, patches, verdicts | "[read the verdicts]. It measured — and refused to keep what didn't help." |
+| 14 | close | card | "Any website. One script tag. A door for agents, intent for owners." |
 
-1. **Problem (20 s).** Agents fail ~40% of realistic tasks on real sites and take minutes; owners see "clicked, left".
-2. **Live (60 s).** HUD: `buy running shoes under $80` (3 steps, ~3 s, all Jev). Then `Trail Runner size 10 to my cart` → refused in 1 step. Then a reworded goal → `recipe` tier.
-3. **It rewrites itself (60 s).** `/evolution/`: version chain, one kept edit read aloud, rolled-back ones. "Guardrails can only get stricter. Held-out goals decide. Rollbacks are kept."
-4. **Numbers (30 s).** From PITCH.md table.
-5. **Honesty + next (10 s).** Simulated agents, mock shop, best case. Next: real traffic, Agent Engine procedural memory, the no-install agent-side version.
+## Live judging (3 min) — see PITCH.md §"3 minutes"
 
-Rehearse 3× against a timer; leave 30 s spare.
+Tabs: `/shop/` (HUD) · `/dashboard/` · `/evolution/` · GitHub README. Backup: the MP4 on laptop and phone.
 
-## Pre-flight
-- [ ] server up; HUD goal works; refusal works; `/evolution/` shows the final run
-- [ ] PITCH.md numbers filled from the final logs
-- [ ] repo pushed (`git push -u origin main`), public
-- [ ] notifications off, charger, mic test
+## Re-producing the video
+```
+node video/record-ab.js                      # A/B clips + ab.json           (laptop, real services)
+npm run compare -- --base <url>              # data/compare.json             (laptop, real services)
+node video/record.js [--only a,b]            # scenes + scenes.json          (laptop)
+python3 video/build.py                       # video/out/*.mp4 + claims.json (anywhere with ffmpeg + PIL)
+```

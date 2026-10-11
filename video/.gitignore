@@ -1,2 +1,4 @@
 raw/
 out/
+work/
+__pycache__/

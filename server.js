@@ -365,6 +365,8 @@ function createServer({ deps, engine, config, recipes, visits, siteDefaults = {}
     if (now - globalBucket.at > 60000) globalBucket = { at: now, n: 0 };
     if (++globalBucket.n > RL.globalPerMin) return 'global';
     const ip = (req.headers['fly-client-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    // Local benchmark/evolution runs hit the API from loopback at high rate; the per-IP limit is for public traffic.
+    if (!req.headers['fly-client-ip'] && /^(::1|::ffff:127\.|127\.)/.test(ip)) return null;
     let b = buckets.get(ip);
     if (!b || now - b.at > 60000) { b = { at: now, n: 0 }; buckets.set(ip, b); }
     if (buckets.size > 10000) buckets.clear();
