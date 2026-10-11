@@ -1,0 +1,13 @@
+.env
+*.env
+atlas-credentials.env
+connection-string.txt
+node_modules/
+test-output.txt
+build-env.js
+# setup scripts from the night before (not part of the project)
+setup/
+test-*.js
+test-*.bat
+run-sandbox-tests.bat
+setup-tonight.bat
