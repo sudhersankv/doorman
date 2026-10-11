@@ -1,0 +1,11 @@
+.git
+node_modules
+logs
+.env
+*.env
+.sync
+test
+data
+docs
+*.bat
+*.md

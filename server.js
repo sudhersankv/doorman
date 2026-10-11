@@ -357,6 +357,20 @@ function createServer({ deps, engine, config, recipes, visits, siteDefaults = {}
     send(res, 200, data, { 'Content-Type': MIME[path.extname(found)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
   }
 
+  // ---- public-deployment safeguards: per-IP and global rate limits on POST /api/* (token buckets, in-memory) ----
+  const RL = { perIpPerMin: Number(site.rateLimitPerIp ?? process.env.RATE_LIMIT_PER_IP ?? 120), globalPerMin: Number(site.rateLimitGlobal ?? process.env.RATE_LIMIT_GLOBAL ?? 1200) };
+  const buckets = new Map(); let globalBucket = { at: Date.now(), n: 0 };
+  function rateLimited(req) {
+    const now = Date.now();
+    if (now - globalBucket.at > 60000) globalBucket = { at: now, n: 0 };
+    if (++globalBucket.n > RL.globalPerMin) return 'global';
+    const ip = (req.headers['fly-client-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    let b = buckets.get(ip);
+    if (!b || now - b.at > 60000) { b = { at: now, n: 0 }; buckets.set(ip, b); }
+    if (buckets.size > 10000) buckets.clear();
+    return ++b.n > RL.perIpPerMin ? ip : null;
+  }
+
   const server = http.createServer(async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'content-type');
@@ -374,6 +388,7 @@ function createServer({ deps, engine, config, recipes, visits, siteDefaults = {}
       }
       const handler = routes[`${req.method} ${p}`];
       if (!handler) throw new HttpError(404, `no route ${req.method} ${p}`);
+      if (req.method === 'POST' && rateLimited(req)) { res.setHeader('Retry-After', '60'); throw new HttpError(429, 'rate limited; try again in a minute'); }
       const body = req.method === 'POST' ? await readBody(req) : null;
       const out = await handler(req, url, body);
       return send(res, 200, out == null ? { error: 'not found' } : out);
